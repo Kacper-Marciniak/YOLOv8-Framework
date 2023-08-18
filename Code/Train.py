@@ -1,5 +1,5 @@
 """
-Train YOLOv8 detection model
+Train YOLOv8 object detection model
 """
 
 import os

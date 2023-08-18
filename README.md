@@ -1,11 +1,20 @@
 # YOLOv8 object detection framework
 
-Framework for object detection models from the YOLOv8 family
+Framework for object detection models from the [YOLOv8](https://github.com/ultralytics/ultralytics) family
+
+- [Requirements](#requirements)
+- [Repository structure](#repository-structure)
+- [Usage](#usage)
+    - [Prepare dataset](#prepare-dataset)
+    - [Train model](#train-model)
+    - [Validate model](#validate-model)
+    - [Preview inference](#preview-inference)
+
 
 ## Requirements
 
 Environment with Python 3.8 or greater (3.11 suggested) and [PyTorch (>=1.8)](https://pytorch.org/get-started/locally/).
-On devices with CUDA-enabled graphics cards, [Nvidia CUDA toolkit version 10.0 or higher](https://developer.nvidia.com/cuda-toolkit) and the corresponding version of PyTorch must additionally be installed.
+On devices with CUDA-enabled graphics cards, [Nvidia CUDA toolkit version 10.0 or higher](https://developer.nvidia.com/cuda-toolkit) and the corresponding version of PyTorch must be installed.
 
 Other packages required:
 - TorchVision (>=0.9.0)

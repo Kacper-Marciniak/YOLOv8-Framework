@@ -3,7 +3,6 @@ Create the dataset needed for model training from labeled set of images
 """
 
 import os
-
 from dataset_prep.createDataset import prepareDataset
 from utility.GUI import askdirectory
 from path.root import ROOT_DIR

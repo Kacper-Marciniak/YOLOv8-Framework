@@ -1,5 +1,5 @@
 """
-Preview inference and save output
+Preview inference and save output in YOLO and COCO format
 """
 
 import os
@@ -12,12 +12,12 @@ from utility.GUI import askdirectory
 from results.visualization import drawResults
 from results.output import saveResultsYolo, saveResultsCoco
 
+# Confidence threshold value
 f_Thresh = 0.75
 
 if __name__ == "__main__":
     # Select directory with input images
-    #s_PathImages = askdirectory("Select folder with images")
-    s_PathImages = r'D:\YoloFramework\datasets\dat-1\test'
+    s_PathImages = askdirectory("Select folder with images", initialdir=os.path.join(ROOT_DIR,'datasets'))
     # Load list of images
     l_ImageNames = [s_FileName for s_FileName in os.listdir(s_PathImages) if s_FileName.lower().split('.')[-1] in ALLOWED_INPUT_FILES]
     print(f"{len(l_ImageNames)} images in folder. Starting preview inference...")
@@ -27,8 +27,8 @@ if __name__ == "__main__":
 
     # Initialize model
     c_Model = Model(
-        s_PathWeights = os.path.join(ROOT_DIR,'models','model.pt'),
-        f_Thresh = f_Thresh
+        s_PathWeights = os.path.join(ROOT_DIR,'models','model.pt'), # Default model path
+        f_Thresh = f_Thresh # Confidence threshold value
     )
 
     # Iterate through files
