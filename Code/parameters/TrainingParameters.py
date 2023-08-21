@@ -8,6 +8,11 @@ AVAILABLE_MODELS = [
     "yolov8m",
     "yolov8l",
     "yolov8x",
+    "yolov8n-seg",
+    "yolov8s-seg",
+    "yolov8m-seg",
+    "yolov8l-seg",
+    "yolov8x-seg",
 ]
 
 # Training parameters

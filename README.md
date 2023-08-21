@@ -1,6 +1,6 @@
 # YOLOv8 object detection framework
 
-Framework for object detection models from the [YOLOv8](https://github.com/ultralytics/ultralytics) family
+Framework for object detection and instance segmentation models from the [YOLOv8](https://github.com/ultralytics/ultralytics) family
 
 - [Requirements](#requirements)
 - [Repository structure](#repository-structure)

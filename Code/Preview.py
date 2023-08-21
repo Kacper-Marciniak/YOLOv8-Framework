@@ -40,7 +40,7 @@ if __name__ == "__main__":
         dc_Results = c_Model.Detect(a_Img)
 
         # Visualize results with opencv GUI
-        a_Preview = drawResults(a_Img.copy(), dc_Results, (800,800))
+        a_Preview = drawResults(a_Img.copy(), dc_Results, _Size=1000)
         cv.imshow(os.path.basename(s_FileName), a_Preview)
         cv.waitKey(0)
         cv.destroyAllWindows()

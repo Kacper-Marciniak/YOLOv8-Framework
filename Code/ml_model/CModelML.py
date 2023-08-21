@@ -5,6 +5,7 @@ Model class definition
 import torch
 import yaml, os, time
 import numpy as np
+import cv2 as cv
 from ultralytics import YOLO
 from parameters.parameters import DEFAULT_MODEL_THRESH
 
@@ -15,8 +16,9 @@ class CModelML():
     def __init__(
             self, 
             s_PathWeights: str, 
-            f_Thresh=DEFAULT_MODEL_THRESH, 
-            s_ForceDevice=''
+            f_Thresh:float = DEFAULT_MODEL_THRESH, 
+            s_ForceDevice:str = '',
+            b_PostProcess: bool = True
         ):
         # Set device
         self._Device = torch.device(0) if s_ForceDevice == '' else s_ForceDevice
@@ -30,8 +32,10 @@ class CModelML():
         self.C_Model = YOLO(
             model = s_PathWeights,
         )
-        self.C_Model.conf_thres = self.f_Thresh
+        self.C_Model.conf_thresh = self.f_Thresh
         self.C_Model.to(self._Device)
+
+        self.s_Task = 'detect' if self.C_Model.task != 'segment' else 'segment'
         
         # Load class names definition
         with open(os.path.join(os.path.dirname(s_PathWeights), 'data.yaml'),'r') as _File:
@@ -40,26 +44,35 @@ class CModelML():
             for s_Class in self.l_ClassNames:
                 print(f"\t* {s_Class}")
 
-        print('Model successfully initialized')
+        # Post-processing
+        self.b_PostProcess = b_PostProcess
+
+        print(f'Model successfully initialized. Task: {self.s_Task}')
     
-    def Detect(self, a_Img: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def Detect(self, a_Img: np.ndarray):
         """
         Perform detection on image
         """
-        a_Bboxes, a_Scores, a_Classes = np.array([]), np.array([]), np.array([])
+        a_Bboxes, l_Polygons, a_Scores, a_Classes = np.array([]), [], np.array([]), np.array([])
         try:
             # Perform detection and get bboxes
             f_Time = time.time()
-            _Results = self.C_Model(a_Img, verbose=False)[0].boxes
+            _Results = self.C_Model(a_Img, verbose=False)[0]
             f_Time = (time.time()-f_Time)*1000.0
 
-            print(f"\n\n[YOLOv8 - {self.s_DeviceName}] image shape: {a_Img.shape[1]}x{a_Img.shape[0]}.")
+            print(f"\n\n[YOLOv8 - {self.s_DeviceName}] image shape: {a_Img.shape[1]}x{a_Img.shape[0]}. Task: {self.s_Task}")
 
             # Format results
-            if _Results.cls.size(dim=0):
-                a_Bboxes = np.round(_Results.xyxy.cpu().numpy()).astype(int)
-                a_Scores = _Results.conf.cpu().numpy().astype(float)
-                a_Classes = _Results.cls.cpu().numpy().astype(int)
+            if _Results.boxes.cls.size(dim=0):                
+                a_Bboxes = np.round(_Results.boxes.xyxy.cpu().numpy()).astype(int)
+                if self.s_Task == 'segment':
+                    l_Polygons = [np.array(np.round(_Polygon),dtype=np.int32) for _Polygon in _Results.masks.xy]
+                a_Scores = _Results.boxes.conf.cpu().numpy().astype(float)
+                a_Classes = _Results.boxes.cls.cpu().numpy().astype(int)
+
+                a_Indices = a_Scores>=self.f_Thresh
+                a_Bboxes, a_Scores, a_Classes = a_Bboxes[a_Indices], a_Scores[a_Indices], a_Classes[a_Indices]
+                l_Polygons= [_Polygon for _Polygon, _Val in zip(l_Polygons, a_Indices) if _Val]
 
                 print(f"Detected {len(a_Bboxes)} objects, {len(np.unique(a_Classes))} unique classes. Inference time: {f_Time:.3f} ms")
                 for _Bbox,_Score,_Class in zip(a_Bboxes,a_Scores,a_Classes):
@@ -70,9 +83,20 @@ class CModelML():
         except Exception as E:
             print(f"Exception {E} during inference.")
 
-        return {
+        dc_Results = {
             "bbox": a_Bboxes,
+            "polygon": l_Polygons,
             "score": a_Scores,
             "class": a_Classes,
-            "img_shape": a_Img.shape
+            "img_shape": a_Img.shape,
+            "task": self.s_Task
         }
+        
+        if self.b_PostProcess:
+            dc_Results = self.PostProcess(dc_Results)
+
+        return dc_Results
+
+    def PostProcess(self, dc_Results: dict):        
+        #TODO: implement post-processing 
+        return dc_Results

@@ -45,31 +45,33 @@ def Validate(s_DatasetDirectory: str, f_Thresh: float = DEFAULT_MODEL_THRESH, b_
     )
 
     a_ClassIds = _Metrics.ap_class_index
+    _QualityMetrics = _Metrics.box if C_Model.s_Task != 'segment' else _Metrics.seg
+
 
     dc_Results = {
-        "mean_ap": _Metrics.box.map,         # mAP50-95
-        "mean_ap50": _Metrics.box.map50,     # mAP50
+        "mean_ap": _QualityMetrics.map,         # mAP50-95
+        "mean_ap50": _QualityMetrics.map50,     # mAP50
         "ap50": {
-           _Metrics.names[s_ClassID]: _Metrics.box.ap50[i] 
+           _Metrics.names[s_ClassID]: _QualityMetrics.ap50[i] 
            for i,s_ClassID  in enumerate(a_ClassIds)
         },  # AP50
         "ap": {
-           _Metrics.names[s_ClassID]: _Metrics.box.ap[i] 
+           _Metrics.names[s_ClassID]: _QualityMetrics.ap[i] 
            for i,s_ClassID  in enumerate(a_ClassIds)
         },  # AP50-95
-        "mean_precission": _Metrics.box.mp,
-        "mean_recall": _Metrics.box.mr,
+        "mean_precission": _QualityMetrics.mp,
+        "mean_recall": _QualityMetrics.mr,
         "precission": {
-           _Metrics.names[s_ClassID]: _Metrics.box.p[i] 
+           _Metrics.names[s_ClassID]: _QualityMetrics.p[i] 
            for i,s_ClassID  in enumerate(a_ClassIds)
         },  # precission
         "recall": {
-           _Metrics.names[s_ClassID]: _Metrics.box.r[i] 
+           _Metrics.names[s_ClassID]: _QualityMetrics.r[i] 
            for i,s_ClassID  in enumerate(a_ClassIds)
         },  # recall
-        "mean_f1": float(np.nanmean(_Metrics.box.f1)),
+        "mean_f1": float(np.nanmean(_QualityMetrics.f1)),
         "f1": {
-           _Metrics.names[s_ClassID]: _Metrics.box.f1[i] 
+           _Metrics.names[s_ClassID]: _QualityMetrics.f1[i] 
            for i,s_ClassID  in enumerate(a_ClassIds)
         },  # recall
         "speed": _Metrics.speed['inference']+_Metrics.speed['preprocess']+_Metrics.speed['postprocess']
