@@ -27,7 +27,7 @@ if __name__ == "__main__":
 
     # Initialize model
     c_Model = Model(
-        s_PathWeights = os.path.join(ROOT_DIR,'models','model.pt'), # Default model path
+        s_PathWeights = os.path.join(ROOT_DIR,'models','model.pt'), # Load custom model from 'models' directory
         f_Thresh = f_Thresh # Confidence threshold value
     )
 

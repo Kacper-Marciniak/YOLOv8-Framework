@@ -12,6 +12,7 @@ Framework for object detection and instance segmentation models from the [YOLOv8
     - [Train model](#train-model)
     - [Validate model](#validate-model)
     - [Preview inference](#preview-inference)
+    - [Preview inference from webcam feed](#preview-inference-from-webcam-feed)
 
 
 ## Requirements
@@ -61,11 +62,15 @@ YOLO-FRAMEWORK
 
 ## Model weights and configuration
 
-Yolo weight file ```model.pt``` together with dataset configuration ```data.yaml``` should be placed in [models directory](models).
+Framework can be used with custom yolo models - weight files ```model.pt``` together with dataset configuration ```data.yaml``` should be placed in [models directory](models).
 
-Default COCO dataset configuration (*coco.yaml*) can be downloaded from [here](https://github.com/ultralytics/ultralytics/blob/main/ultralytics/cfg/datasets/coco.yaml).
-
-YOLOv8 weight files (*yolov8_.pt* / *yolov8_-seg.pt*) can be downloaded from [here](https://github.com/ultralytics/assets/releases/latest).
+Official YOLOv8 models can be used as well, f.e.:
+```
+c_Model = Model(
+    s_PathWeights = 'yolov8l-seg.pt',
+    f_Thresh = 0.75
+)
+```
 
 ## Usage
 
@@ -183,12 +188,38 @@ Output file structure:
 4. Preview output is saved to the [inference_output](inference_output) as *.txt YOLO and *.json COCO results file
 5. Pressing 's' during preview will save the image file to disk, 'ESC' will close the script
 
-Weights file: ```models/model.pt```
-
-Data configuration file: ```models/data.yaml```
+Local files localization:
+- Weights file: ```models/model.pt```
+- Data configuration file: ```models/data.yaml```
 
 Parameters in Preview.py:
 - ```f_Thresh``` - confidence threshold value
+
+Model output format:
+```
+dcResults = {
+    # Detected objects
+    "bbox": a_Bboxes, # Array of bounding boxes
+    "polygon": l_Polygons, # List of polygons (for segmentation task)
+    "score": a_Scores, # Array of confidence scores
+    "class": a_Classes, # Array of class IDs
+    # Model/image parameters
+    "img_shape": a_Img.shape, # Input image shape
+    "task": self.s_Task, # Model task
+    "names": self.l_ClassNames # List of class names,
+    "time": f_Time # Inference time
+}
+```
+
+### Preview inference from webcam feed
+
+1. Run [PreviewCamera.py](Code/PreviewCamera.py)
+2. Your camera feed will be displayed in OpenCV GUI
+
+Parameters in PreviewCamera.py:
+- ```f_Thresh``` - confidence threshold value
+- ```i_TargetFPS``` - target FPS value
+
 
 <p align="center"><img src="readme/Example_1.jpg" width= 90% style="max-width:500px"></p>
 <p align="center"><img src="readme/Example_2.jpg" width= 90% style="max-width:500px"></p>

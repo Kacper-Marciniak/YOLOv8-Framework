@@ -8,6 +8,8 @@ import numpy as np
 import cv2 as cv
 from ultralytics import YOLO
 from parameters.parameters import DEFAULT_MODEL_THRESH
+from path.root import ROOT_DIR
+
 
 class CModelML():
     """
@@ -39,8 +41,10 @@ class CModelML():
         
         # Load class names definition
         sConfigFilePath = os.path.join(os.path.dirname(s_PathWeights), 'data.yaml')
-        if not os.path.exists(sConfigFilePath): raise Exception(f"Configuration file {sConfigFilePath} doesn't exist")
-        with open(os.path.join(os.path.dirname(s_PathWeights), 'data.yaml'),'r') as _File:
+        if not os.path.exists(sConfigFilePath): 
+            print(f"Local configuration file {sConfigFilePath} doesn't exist. Loading default COCO configuration.")
+            sConfigFilePath = os.path.join(ROOT_DIR, 'configuration', 'data_coco.yaml')
+        with open(sConfigFilePath,'r') as _File:
             self.l_ClassNames = yaml.safe_load(_File)['names']
             if isinstance(self.l_ClassNames, dict):
                 self.l_ClassNames = list(self.l_ClassNames.values())
@@ -57,10 +61,14 @@ class CModelML():
 
         print(f'Model successfully initialized. Task: {self.s_Task}')
     
-    def Detect(self, a_Img: np.ndarray):
+    def Detect(self, a_Img: np.ndarray, b_PrintOutput: bool = True):
         """
         Perform detection on image
         """
+        def print(sText):
+            if b_PrintOutput: print(sText)
+            else: pass
+
         a_Bboxes, l_Polygons, a_Scores, a_Classes = np.array([]), [], np.array([]), np.array([])
         try:
             # Perform detection and get bboxes
@@ -98,7 +106,8 @@ class CModelML():
             "class": a_Classes,
             "img_shape": a_Img.shape,
             "task": self.s_Task,
-            "names": self.l_ClassNames
+            "names": self.l_ClassNames,
+            "time": f_Time
         }
         
         if self.b_PostProcess:
