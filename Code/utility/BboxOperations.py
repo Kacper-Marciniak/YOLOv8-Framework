@@ -1,6 +1,5 @@
 import numpy as np
 
-
 def convertXYWHToXYXY(a_Bbox: np.ndarray | list):
     """
     Converts bounding box from [X Y W H] to [X1 Y1 X2 Y2] format

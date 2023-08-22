@@ -1,9 +1,12 @@
-# YOLOv8 object detection framework
+<p align="center"><img src="readme/header.png" width="66%" style="min-width:125px"></p>
+
+# YOLOv8 framework
 
 Framework for object detection and instance segmentation models from the [YOLOv8](https://github.com/ultralytics/ultralytics) family
 
 - [Requirements](#requirements)
 - [Repository structure](#repository-structure)
+- [Model weights and configuration](#model-weights-and-configuration)
 - [Usage](#usage)
     - [Prepare dataset](#prepare-dataset)
     - [Train model](#train-model)
@@ -50,11 +53,19 @@ YOLO-FRAMEWORK
 |_ validation_results
 |_ Code
     |_ PrepareDataset.py
-    |_ Train.py
+    |_ Train.pydata.yaml.pt
     |_ Validate.py
     |_ Preview.py
     ...
 ```
+
+## Model weights and configuration
+
+Yolo weight file ```model.pt``` together with dataset configuration ```data.yaml``` should be placed in [models directory](models).
+
+Default COCO dataset configuration (*coco.yaml*) can be downloaded from [here](https://github.com/ultralytics/ultralytics/blob/main/ultralytics/cfg/datasets/coco.yaml).
+
+YOLOv8 weight files (*yolov8_.pt* / *yolov8_-seg.pt*) can be downloaded from [here](https://github.com/ultralytics/assets/releases/latest).
 
 ## Usage
 
@@ -170,6 +181,15 @@ Output file structure:
 2. Select folder with input images
 3. Preview will be displayed in OpenCV GUI
 4. Preview output is saved to the [inference_output](inference_output) as *.txt YOLO and *.json COCO results file
+5. Pressing 's' during preview will save the image file to disk, 'ESC' will close the script
+
+Weights file: ```models/model.pt```
+
+Data configuration file: ```models/data.yaml```
 
 Parameters in Preview.py:
 - ```f_Thresh``` - confidence threshold value
+
+<p align="center"><img src="readme/Example_1.jpg" width= 90% style="max-width:500px"></p>
+<p align="center"><img src="readme/Example_2.jpg" width= 90% style="max-width:500px"></p>
+<p align="center"><img src="readme/Example_3.jpg" width= 90% style="max-width:500px"></p>

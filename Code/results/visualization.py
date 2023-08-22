@@ -29,9 +29,6 @@ def getColour(i_Index: int):
     return COLOURS[i_Index % len(COLOURS)]
 
 def drawResults(a_Img: np.ndarray, dc_Results: dict, _Size: tuple|int = None):
-
-    a_OverlayMasks = np.zeros_like(a_Img)
-    a_OverlayBboxes = np.zeros_like(a_Img)
     
     # Resize input image
     if isinstance(_Size,tuple):
@@ -45,8 +42,8 @@ def drawResults(a_Img: np.ndarray, dc_Results: dict, _Size: tuple|int = None):
         f_ResizeY = 1
 
     a_Img = cv.resize(a_Img, (int(f_ResizeX*a_Img.shape[1]), int(f_ResizeY*a_Img.shape[0])))
-    a_OverlayMasks = cv.resize(a_OverlayMasks, (int(f_ResizeX*a_OverlayMasks.shape[1]), int(f_ResizeY*a_OverlayMasks.shape[0])))
-    a_OverlayBboxes = cv.resize(a_OverlayBboxes, (int(f_ResizeX*a_OverlayBboxes.shape[1]), int(f_ResizeY*a_OverlayBboxes.shape[0])))
+    a_OverlayBboxes = np.zeros_like(a_Img)
+    a_OverlayMasks = np.zeros_like(a_Img)
         
     
     # Draw objects
@@ -57,10 +54,12 @@ def drawResults(a_Img: np.ndarray, dc_Results: dict, _Size: tuple|int = None):
         # Draw masks for instance segmentation
         if dc_Results['task'] == 'segment':
             a_Polygon = dc_Results['polygon'][i].copy()
-            a_Mask = cv.drawContours(np.zeros((dc_Results['img_shape'][0],dc_Results['img_shape'][1],1)), [a_Polygon], 0, 255, -1)
-            a_Mask = cv.resize(a_Mask, (a_OverlayMasks.shape[1],a_OverlayMasks.shape[0]))
+
+            a_Polygon[:,0], a_Polygon[:,1] = a_Polygon[:,0]*f_ResizeX, a_Polygon[:,1]*f_ResizeY
+
+            a_Mask = cv.drawContours(np.zeros((a_OverlayMasks.shape[0],a_OverlayMasks.shape[1],1),dtype=np.uint8), [a_Polygon], 0, 255, -1, cv.LINE_AA)
             a_TmpMask = np.zeros_like(a_OverlayMasks)
-            a_TmpMask[a_Mask>0] = t_Colour
+            a_TmpMask[a_Mask[:,:,0]>0] = t_Colour
             
             a_Indices1, a_Indices2 = np.sum(a_OverlayMasks,2)>0, np.sum(a_TmpMask,2)>0
             a_Indices = np.logical_and(a_Indices1,a_Indices2)
@@ -77,16 +76,17 @@ def drawResults(a_Img: np.ndarray, dc_Results: dict, _Size: tuple|int = None):
         # Draw BBOX
         a_TmpMask = np.zeros_like(a_OverlayMasks)
         a_Bbox = np.round(scale(dc_Results['bbox'][i], f_ResizeX, f_ResizeY)).astype(int)
-        cv.rectangle(a_TmpMask, (a_Bbox[0],a_Bbox[1]), (a_Bbox[2],a_Bbox[3]), t_Colour, 2) 
+        cv.rectangle(a_TmpMask, (a_Bbox[0],a_Bbox[1]), (a_Bbox[2],a_Bbox[3]), t_Colour, 2, cv.LINE_AA) 
         
         # Put text
-        s_Text = f"{i_ClassID}: {f_Score:.2f}"
+        s_Text = f"{dc_Results['names'][i_ClassID]}: {f_Score:.2f}"
         f_TextScale, i_TextThickness = 0.5, 1
         (w, h), _ = cv.getTextSize(s_Text, cv.FONT_HERSHEY_DUPLEX, f_TextScale, i_TextThickness)
         h += 6
         w += 4        
         cv.rectangle(a_TmpMask, (a_Bbox[0],a_Bbox[1]), (a_Bbox[0]+w,a_Bbox[1]+h), t_Colour, -1)
-        cv.putText(a_TmpMask, s_Text, (a_Bbox[0]+2,a_Bbox[1]+h-3), cv.FONT_HERSHEY_DUPLEX, f_TextScale, (255,255,255), i_TextThickness)
+        cv.putText(a_TmpMask, s_Text, (a_Bbox[0]+2,a_Bbox[1]+h-3), cv.FONT_HERSHEY_DUPLEX, f_TextScale, (1,1,1), i_TextThickness*2, cv.LINE_AA)
+        cv.putText(a_TmpMask, s_Text, (a_Bbox[0]+2,a_Bbox[1]+h-3), cv.FONT_HERSHEY_DUPLEX, f_TextScale, (255,255,255), i_TextThickness, cv.LINE_AA)
 
         a_Indices1, a_Indices2 = np.sum(a_OverlayBboxes,2)>0, np.sum(a_TmpMask,2)>0
         a_Indices = np.logical_and(a_Indices1,a_Indices2)

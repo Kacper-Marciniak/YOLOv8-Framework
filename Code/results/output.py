@@ -1,7 +1,5 @@
-import numpy as np
 import os
 import json
-import cv2 as cv
 
 from utility.BboxOperations import convertAbsToRel, convertXYXYToXYWH
 

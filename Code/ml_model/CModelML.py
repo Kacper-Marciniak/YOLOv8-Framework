@@ -38,8 +38,16 @@ class CModelML():
         self.s_Task = 'detect' if self.C_Model.task != 'segment' else 'segment'
         
         # Load class names definition
+        sConfigFilePath = os.path.join(os.path.dirname(s_PathWeights), 'data.yaml')
+        if not os.path.exists(sConfigFilePath): raise Exception(f"Configuration file {sConfigFilePath} doesn't exist")
         with open(os.path.join(os.path.dirname(s_PathWeights), 'data.yaml'),'r') as _File:
             self.l_ClassNames = yaml.safe_load(_File)['names']
+            if isinstance(self.l_ClassNames, dict):
+                self.l_ClassNames = list(self.l_ClassNames.values())
+            elif not isinstance(self.l_ClassNames, list):
+                raise Exception(f"Invalid class definition in {sConfigFilePath} configuration file!")
+            else:
+                self.l_ClassNames = list(self.l_ClassNames)
             print(f"Class names:")
             for s_Class in self.l_ClassNames:
                 print(f"\t* {s_Class}")
@@ -89,7 +97,8 @@ class CModelML():
             "score": a_Scores,
             "class": a_Classes,
             "img_shape": a_Img.shape,
-            "task": self.s_Task
+            "task": self.s_Task,
+            "names": self.l_ClassNames
         }
         
         if self.b_PostProcess:
