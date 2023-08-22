@@ -6,13 +6,15 @@ Framework for object detection and instance segmentation models from the [YOLOv8
 
 - [Requirements](#requirements)
 - [Repository structure](#repository-structure)
-- [Model weights and configuration](#model-weights-and-configuration)
-- [Usage](#usage)
+- [Basic usage](#basic-usage)
+    - [Model weights and configuration](#model-weights-and-configuration)
+    - [Results format](#results-format)
+- [Use of prepared scripts](#use-of-prepared-scripts)
     - [Prepare dataset](#prepare-dataset)
     - [Train model](#train-model)
     - [Validate model](#validate-model)
-    - [Preview inference](#preview-inference)
-    - [Preview inference from webcam feed](#preview-inference-from-webcam-feed)
+    - [Inference and preview](#inference-and-preview)
+    - [Inference on webcam feed](#inference-on-webcam-feed)
 
 
 ## Requirements
@@ -32,8 +34,8 @@ Other packages required:
 - tqdm (>=4.64.0)
 - Pandas (>=1.1.4)
 - Seaborn (>=0.11.0)
-- psUtil
-- Py-CPUinfo
+- psutil
+- py-CPUinfo
 
 as specified in [requirements.txt](requirements.txt). They can be installed using the following command:
 
@@ -57,22 +59,46 @@ YOLO-FRAMEWORK
     |_ Train.pydata.yaml.pt
     |_ Validate.py
     |_ Preview.py
+    |_ PreviewCamera.py
     ...
 ```
 
-## Model weights and configuration
+## Basic usage
+
+### Model weights and configuration
 
 Framework can be used with custom yolo models - weight files ```model.pt``` together with dataset configuration ```data.yaml``` should be placed in [models directory](models).
 
-Official YOLOv8 models can be used as well, f.e.:
+Official YOLOv8 models can be used as well:
+
 ```
+from ml_model.CModelML import CModelML as Model
 c_Model = Model(
     s_PathWeights = 'yolov8l-seg.pt',
     f_Thresh = 0.75
 )
 ```
 
-## Usage
+### Results format
+
+ ```
+from ml_model.CModelML import CModelML as Model
+c_Model = Model(s_PathWeights='yolov8n.pt', f_Thresh=0.75)
+results = c_Model.Detect(cv.imread('example_path\\example_image.jpg))
+```
+
+Model class returns results in a form of dictionary with following keys:
+- ```bbox```: Array of bounding boxes [ndarray]
+- ```polygon```: List of polygons (for segmentation task) [list of ndarrays]
+- ```score```: Array of confidence scores [ndarray]
+- ```class```: Array of class IDs [ndarray]
+- ```img_shape```: Input image shape (W,H,C) [tuple]
+- ```task```: Model task type ('segment' or 'detect') [string]
+- ```names```: List of class names [list]
+- ```time```: Inference time in ms [float]
+
+
+## Use of prepared scripts
 
 ### Prepare dataset
 
@@ -180,7 +206,7 @@ Output file structure:
 }
 ```
 
-### Preview inference
+### Inference and preview
 
 1. Run [Preview.py](Code/Preview.py)
 2. Select folder with input images
@@ -195,23 +221,7 @@ Local files localization:
 Parameters in Preview.py:
 - ```f_Thresh``` - confidence threshold value
 
-Model output format:
-```
-dcResults = {
-    # Detected objects
-    "bbox": a_Bboxes, # Array of bounding boxes
-    "polygon": l_Polygons, # List of polygons (for segmentation task)
-    "score": a_Scores, # Array of confidence scores
-    "class": a_Classes, # Array of class IDs
-    # Model/image parameters
-    "img_shape": a_Img.shape, # Input image shape
-    "task": self.s_Task, # Model task
-    "names": self.l_ClassNames # List of class names,
-    "time": f_Time # Inference time
-}
-```
-
-### Preview inference from webcam feed
+### Inference on webcam feed
 
 1. Run [PreviewCamera.py](Code/PreviewCamera.py)
 2. Your camera feed will be displayed in OpenCV GUI
