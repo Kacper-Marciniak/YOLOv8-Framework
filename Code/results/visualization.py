@@ -28,7 +28,7 @@ COLOURS = [
 def getColour(i_Index: int):
     return COLOURS[i_Index % len(COLOURS)]
 
-def drawResults(a_Img: np.ndarray, dc_Results: dict, _Size: tuple|int = None):
+def drawResults(a_Img: np.ndarray, dc_Results: dict, _Size: tuple|int = None, b_DrawInferenceTime: bool = False):
     
     # Resize input image
     if isinstance(_Size,tuple):
@@ -105,5 +105,9 @@ def drawResults(a_Img: np.ndarray, dc_Results: dict, _Size: tuple|int = None):
 
     a_Indices = np.sum(a_OverlayBboxes,axis=2)>0  
     a_Img[a_Indices] = np.clip(np.round(a_Img[a_Indices]*0.35+a_OverlayBboxes[a_Indices]*0.65).astype(np.uint8),0,255)
+
+    if b_DrawInferenceTime:
+        cv.putText(a_Img, f"Processing time: {dc_Results['time']:.1f}", (0,a_Img.shape[0]), cv.FONT_HERSHEY_DUPLEX, 1.0, (0,0,0), 2, cv.LINE_AA)
+        cv.putText(a_Img, f"Processing time: {dc_Results['time']:.1f}", (0,a_Img.shape[0]), cv.FONT_HERSHEY_DUPLEX, 1.0, (255,255,255), 1, cv.LINE_AA)
     
     return a_Img

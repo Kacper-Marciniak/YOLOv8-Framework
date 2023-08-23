@@ -39,7 +39,9 @@ Other packages required:
 
 as specified in [requirements.txt](requirements.txt). They can be installed using the following command:
 
-```bash pip install -r requirements.txt ```
+```bash 
+pip install -r requirements.txt 
+```
 
 ## Repository structure
 
@@ -114,7 +116,8 @@ Model class returns results in a form of dictionary with following keys:
 - ```img_shape```: Input image shape (W,H,C) [tuple]
 - ```task```: Model task type ('segment' or 'detect') [string]
 - ```names```: List of class names [list]
-- ```time```: Inference time in ms [float]
+- ```time```: Full processing time in ms [float]
+- ```"inference_time"```: Inference time in ms [float]
 
 
 ## Use of prepared scripts

@@ -12,9 +12,9 @@ from results.visualization import drawResults
 from camera.CCamera import CCamera as Camera
 
 # Target FPS value
-i_TargetFPS = 30
+i_TargetFPS = 10
 # Confidence threshold value
-f_Thresh = 0.50
+f_Thresh = 0.25
 
 if __name__ == "__main__":
     # Initialize camera
@@ -36,7 +36,7 @@ if __name__ == "__main__":
         dc_Results = c_Model.Detect(a_Img)
 
         # Visualize results with opencv GUI
-        a_Preview = drawResults(a_Img.copy(), dc_Results, _Size=1000)
+        a_Preview = drawResults(a_Img.copy(), dc_Results, _Size=1000, b_DrawInferenceTime=True)
         cv.imshow("Camera", a_Preview)
         
         f_Time = (time.time() - f_Time)*1000.0

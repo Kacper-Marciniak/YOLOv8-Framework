@@ -69,6 +69,7 @@ class CModelML():
         """
         Perform detection on image
         """
+        f_Time = time.time()
         
         if not b_PrintOutput:            
             sys.stdout = open(os.devnull, 'w')
@@ -85,11 +86,11 @@ class CModelML():
             raise Exception("Invalid model input")
 
         a_Bboxes, l_Polygons, a_Scores, a_Classes = np.array([]), [], np.array([]), np.array([])
+        f_InferenceTime = np.nan
+
         try:
-            # Perform detection and get bboxes
-            f_Time = time.time()
+            # Perform detection
             _Results = self.C_Model(_Input, verbose=False)[0]
-            f_Time = (time.time()-f_Time)*1000.0
 
             print(f"\n\n[YOLOv8 - {self.s_DeviceName}] image shape: {_Input.shape[1]}x{_Input.shape[0]}. Task: {self.s_Task}")
 
@@ -100,6 +101,7 @@ class CModelML():
                     l_Polygons = [np.array(np.round(_Polygon),dtype=np.int32) for _Polygon in _Results.masks.xy]
                 a_Scores = _Results.boxes.conf.cpu().numpy().astype(float)
                 a_Classes = _Results.boxes.cls.cpu().numpy().astype(int)
+                f_InferenceTime = sum(list(_Results.speed.values()))
 
                 a_Indices = a_Scores>=self.f_Thresh
                 a_Bboxes, a_Scores, a_Classes = a_Bboxes[a_Indices], a_Scores[a_Indices], a_Classes[a_Indices]
@@ -114,6 +116,8 @@ class CModelML():
         except Exception as E:
             print(f"Exception {E} during inference.")
 
+        f_Time = (time.time()-f_Time)*1000.0
+
         dc_Results = {
             "bbox": a_Bboxes,
             "polygon": l_Polygons,
@@ -123,6 +127,7 @@ class CModelML():
             "task": self.s_Task,
             "names": self.l_ClassNames,
             "time": f_Time,
+            "inference_time": f_InferenceTime
         }
         
         if self.b_PostProcess:
