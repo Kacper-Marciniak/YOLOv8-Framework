@@ -3,17 +3,21 @@ Model class definition
 """
 
 import torch
-import yaml, os, time
+import yaml, os, time, sys
 import numpy as np
 import cv2 as cv
 from ultralytics import YOLO
-from parameters.parameters import DEFAULT_MODEL_THRESH
+from parameters.parameters import DEFAULT_MODEL_THRESH, ALLOWED_INPUT_FILES
 from path.root import ROOT_DIR
 
 
 class CModelML():
     """
     YOLOv8 object detection model
+    * s_PathWeights: str - path to weights file or name of official YOLOv8 model
+    * f_Thresh: float = DEFAULT_MODEL_THRESH - confidence score threshold
+    * s_ForceDevice: str = '' - force device (f.e. 'cpu', 'cuda:0')
+    * b_PostProcess: bool - enable post-processing
     """
     def __init__(
             self, 
@@ -27,7 +31,7 @@ class CModelML():
         self.s_DeviceName = torch.cuda.get_device_name(self._Device) if self._Device != 'cpu' else 'CPU'
         
         # Set confidence threshold
-        self.f_Thresh = max( min(round(f_Thresh,3), 0.95), 0.05)
+        self.f_Thresh = np.clip(f_Thresh,0.001,0.999)
 
         # Initialize YOLO architecture
         print(f"Initializing YOLOv8 model\n\tWeights: {s_PathWeights}\n\tDevice: {self.s_DeviceName}")
@@ -61,22 +65,33 @@ class CModelML():
 
         print(f'Model successfully initialized. Task: {self.s_Task}')
     
-    def Detect(self, a_Img: np.ndarray, b_PrintOutput: bool = True):
+    def Detect(self, _Input: np.ndarray | str, b_PrintOutput: bool = True):
         """
         Perform detection on image
         """
-        def print(sText):
-            if b_PrintOutput: print(sText)
-            else: pass
+        
+        if not b_PrintOutput:            
+            sys.stdout = open(os.devnull, 'w')
+
+        # Check input
+        if isinstance(_Input, np.ndarray): pass
+        elif isinstance(_Input, str):
+            _Input = _Input.lower()
+            if os.path.exists(_Input) and _Input.split('.')[-1] in ALLOWED_INPUT_FILES:
+                _Input = cv.imread(_Input)
+            else:
+                raise Exception("Invalid input path")
+        else: 
+            raise Exception("Invalid model input")
 
         a_Bboxes, l_Polygons, a_Scores, a_Classes = np.array([]), [], np.array([]), np.array([])
         try:
             # Perform detection and get bboxes
             f_Time = time.time()
-            _Results = self.C_Model(a_Img, verbose=False)[0]
+            _Results = self.C_Model(_Input, verbose=False)[0]
             f_Time = (time.time()-f_Time)*1000.0
 
-            print(f"\n\n[YOLOv8 - {self.s_DeviceName}] image shape: {a_Img.shape[1]}x{a_Img.shape[0]}. Task: {self.s_Task}")
+            print(f"\n\n[YOLOv8 - {self.s_DeviceName}] image shape: {_Input.shape[1]}x{_Input.shape[0]}. Task: {self.s_Task}")
 
             # Format results
             if _Results.boxes.cls.size(dim=0):                
@@ -104,15 +119,17 @@ class CModelML():
             "polygon": l_Polygons,
             "score": a_Scores,
             "class": a_Classes,
-            "img_shape": a_Img.shape,
+            "img_shape": _Input.shape,
             "task": self.s_Task,
             "names": self.l_ClassNames,
-            "time": f_Time
+            "time": f_Time,
         }
         
         if self.b_PostProcess:
             dc_Results = self.PostProcess(dc_Results)
 
+        sys.stdout = sys.__stdout__
+        
         return dc_Results
 
     def PostProcess(self, dc_Results: dict):        

@@ -43,3 +43,12 @@ if __name__ == "__main__":
         f_Time = max(1,int(1000.0/i_TargetFPS-f_Time))
         
         cv.waitKey(f_Time)
+
+        # Break from loop when openCV window is closed
+        if not cv.getWindowProperty("Camera", cv.WND_PROP_VISIBLE): break
+    
+    try: 
+        CCamera.close()
+    except:
+        pass
+    CCamera = None

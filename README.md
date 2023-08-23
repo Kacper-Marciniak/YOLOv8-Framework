@@ -39,7 +39,7 @@ Other packages required:
 
 as specified in [requirements.txt](requirements.txt). They can be installed using the following command:
 
-``` pip install -r requirements.txt ```
+```bash pip install -r requirements.txt ```
 
 ## Repository structure
 
@@ -67,24 +67,43 @@ YOLO-FRAMEWORK
 
 ### Model weights and configuration
 
-Framework can be used with custom yolo models - weight files ```model.pt``` together with dataset configuration ```data.yaml``` should be placed in [models directory](models).
+Framework can be used with custom yolo models. By default CModelML class loads weights from [models directory](models) - ```models/model.pt```.
+Custom path can be used as well. Important: when using local models (either with default or custom path) dataset configuration file ```data.yaml``` has to be in the same directory as weights file. Example .yaml coonfiguration file from COCO dataset can be viewed [here](https://github.com/ultralytics/ultralytics/blob/main/ultralytics/cfg/datasets/coco.yaml). ```data.yaml``` for custom datasets is created when using dataset [preparation script](#prepare-dataset).
 
-Official YOLOv8 models can be used as well:
+```python
+from ml_model.CModelML import CModelML as Model
+
+# Default model initialization
+c_Model = Model() # weights loaded from models/model.pt
+
+# Model initialization with custom path
+c_Model = Model('example_path\\my_model.pt')
+
+# Model initialization with official YOLOv8 weights
+c_Model = Model('yolov8n.pt') 
 
 ```
-from ml_model.CModelML import CModelML as Model
-c_Model = Model(
-    s_PathWeights = 'yolov8l-seg.pt',
-    f_Thresh = 0.75
-)
-```
 
-### Results format
+Additional parameters of CModelML class can be tweaked:
+* ```f_Thresh``` - confidence score threshold [float]
+* ```s_ForceDevice```:  force device (f.e. 'cpu', 'cuda:0') [str]
+* ``b_PostProcess``: enable post-processing [bool]
 
- ```
+### Inference and results
+
+CModelML class takes as input ndarrays in a standard OpenCV format (shape=(H,W,3), dtype=np.uint8) or string with path to image in a *'.jpg'*, *'.jpeg'* or *'.png'* format.
+
+```python
+import cv2 as cv
 from ml_model.CModelML import CModelML as Model
-c_Model = Model(s_PathWeights='yolov8n.pt', f_Thresh=0.75)
-results = c_Model.Detect(cv.imread('example_path\\example_image.jpg))
+c_Model = Model(s_PathWeights='yolov8n.pt', f_Thresh=0.75) # Initialize model
+
+# perform inference using ndarray
+image = cv.imread('example_path\\example_image.jpg') # load image using openCV
+results = c_Model.Detect(image)
+
+# perform inference using path to image
+results = c_Model.Detect('example_path\\example_image.jpg')
 ```
 
 Model class returns results in a form of dictionary with following keys:
@@ -175,34 +194,34 @@ validation_results
 ```
 
 Output file structure:
-```
+```json
 {
-    "mean_ap": mAP50:95,
-    "mean_ap50": mAP50,
+    "mean_ap": "mAP50:95",
+    "mean_ap50": "mAP50",
     "ap50": {
-        "class_name": AP50,
-        ...
+        "class_name": "AP50",
+        //...
     },
     "ap": {
-        "class_name": AP50:95,
-        ...
+        "class_name": "AP50:95",
+        //...
     },
-    "mean_precission": MEAN_PRECISSION,
-    "mean_recall": MEAN_RECALL,
+    "mean_precission": "MEAN_PRECISSION",
+    "mean_recall": "MEAN_RECALL",
     "precission": {
-        "class_name": PRECISSION,
-        ...
+        "class_name": "PRECISSION",
+        //...
     },
     "recall": {
-        "class_name": RECALL,
-        ...
+        "class_name": "RECALL",
+        //...
     },
-    "mean_f1": F1,
+    "mean_f1": "F1",
     "f1": {
-        "class_name": F1,
-        ...
+        "class_name": "F1",
+        //...
     },
-    "speed": TOTAL_INFERENCE_TIME_PER_IMAGE
+    "speed": "TOTAL_INFERENCE_TIME_PER_IMAGE"
 }
 ```
 
