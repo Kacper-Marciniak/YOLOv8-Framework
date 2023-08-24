@@ -9,7 +9,7 @@ import cv2 as cv
 from ultralytics import YOLO
 from parameters.parameters import DEFAULT_MODEL_THRESH, ALLOWED_INPUT_FILES
 from path.root import ROOT_DIR
-
+from utility.tiles import makeTiles, resultStiching
 
 class CModelML():
     """
@@ -24,7 +24,8 @@ class CModelML():
             s_PathWeights: str, 
             f_Thresh:float = DEFAULT_MODEL_THRESH, 
             s_ForceDevice:str = '',
-            b_PostProcess: bool = True
+            b_PostProcess: bool = True,
+            i_TileSize: int = None
         ):
         # Set device
         self._Device = torch.device(0) if s_ForceDevice == '' else s_ForceDevice
@@ -63,36 +64,23 @@ class CModelML():
         # Post-processing
         self.b_PostProcess = b_PostProcess
 
-        print(f'Model successfully initialized. Task: {self.s_Task}')
-    
-    def Detect(self, _Input: np.ndarray | str, b_PrintOutput: bool = True):
-        """
-        Perform detection on image
-        """
-        f_Time = time.time()
-        
-        if not b_PrintOutput:            
-            sys.stdout = open(os.devnull, 'w')
+        # Tiling
+        self.i_TileSize = i_TileSize
+        self.f_TileOVerlap = 0.2
 
-        # Check input
-        if isinstance(_Input, np.ndarray): pass
-        elif isinstance(_Input, str):
-            _Input = _Input.lower()
-            if os.path.exists(_Input) and _Input.split('.')[-1] in ALLOWED_INPUT_FILES:
-                _Input = cv.imread(_Input)
-            else:
-                raise Exception("Invalid input path")
-        else: 
-            raise Exception("Invalid model input")
+        print(f'Model successfully initialized. Task: {self.s_Task}')
+
+    def __Inference(self, a_InputImg: np.ndarray | str):
+        """
+        Inference
+        """
 
         a_Bboxes, l_Polygons, a_Scores, a_Classes = np.array([]), [], np.array([]), np.array([])
         f_InferenceTime = np.nan
 
         try:
             # Perform detection
-            _Results = self.C_Model(_Input, verbose=False)[0]
-
-            print(f"\n\n[YOLOv8 - {self.s_DeviceName}] image shape: {_Input.shape[1]}x{_Input.shape[0]}. Task: {self.s_Task}")
+            _Results = self.C_Model(a_InputImg, verbose=False)[0]
 
             # Format results
             if _Results.boxes.cls.size(dim=0):                
@@ -107,29 +95,64 @@ class CModelML():
                 a_Bboxes, a_Scores, a_Classes = a_Bboxes[a_Indices], a_Scores[a_Indices], a_Classes[a_Indices]
                 l_Polygons= [_Polygon for _Polygon, _Val in zip(l_Polygons, a_Indices) if _Val]
 
-                print(f"Detected {len(a_Bboxes)} objects, {len(np.unique(a_Classes))} unique classes. Inference time: {f_Time:.3f} ms")
-                for _Bbox,_Score,_Class in zip(a_Bboxes,a_Scores,a_Classes):
-                    print(f"\t* Class \'{self.l_ClassNames[_Class]}\' detected with confidence {_Score:.2f}: {_Bbox.tolist()}")
-            else:
-                print(f"No objects detected.")
- 
         except Exception as E:
             print(f"Exception {E} during inference.")
 
-        f_Time = (time.time()-f_Time)*1000.0
-
-        dc_Results = {
+        return {
             "bbox": a_Bboxes,
             "polygon": l_Polygons,
             "score": a_Scores,
             "class": a_Classes,
-            "img_shape": _Input.shape,
-            "task": self.s_Task,
-            "names": self.l_ClassNames,
-            "time": f_Time,
-            "inference_time": f_InferenceTime
+            "inference_time": f_InferenceTime,
         }
-        
+
+    def Detect(self, _Input: np.ndarray | str, b_PrintOutput: bool = True):
+        """
+        Perform detection on image
+        """   
+        f_Time = time.time()
+
+        if not b_PrintOutput:            
+            sys.stdout = open(os.devnull, 'w')
+
+        # Check input
+        if isinstance(_Input, np.ndarray): pass
+        elif isinstance(_Input, str):
+            _Input = _Input.lower()
+            if os.path.exists(_Input) and _Input.split('.')[-1] in ALLOWED_INPUT_FILES:
+                _Input = cv.imread(_Input)
+            else:
+                raise Exception("Invalid input path")
+        else: 
+            raise Exception("Invalid model input")
+
+
+        print(f"\n\n[YOLOv8 - {self.s_DeviceName}] image shape: {_Input.shape[1]}x{_Input.shape[0]}. Task: {self.s_Task}")
+            
+        # Tiling
+        if self.i_TileSize is not None and max(_Input.shape) > self.i_TileSize:
+            lCoords = makeTiles(_Input, self.i_TileSize, self.f_TileOVerlap)
+        else:
+            lCoords = [[[0,0],[_Input.shape[1],_Input.shape[0]]]]
+
+        l_Results = []
+        # Inference
+        for [[x1,y1],[x2,y2]] in lCoords:
+            l_Results.append(self.__Inference(_Input[y1:y2,x1:x2]))
+
+        # Tile stiching
+        dc_Results = resultStiching(l_Results, lCoords)
+
+        dc_Results["img_shape"] = _Input.shape
+        dc_Results["task"] = self.s_Task
+        dc_Results["names"] = self.l_ClassNames
+        dc_Results["time"] = (time.time()-f_Time)*1000.0
+
+        print(f"Detected {len(dc_Results['class'])} objects, {len(np.unique(dc_Results['class']))} unique classes. Inference time: {dc_Results['time']:.3f} ms")
+        for _Bbox,_Score,_Class in zip(dc_Results['bbox'],dc_Results['score'],dc_Results['class']):
+            print(f"\t* Class \'{self.l_ClassNames[_Class]}\' detected with confidence {_Score:.2f}: {_Bbox.tolist()}")
+
+        # Post-processing
         if self.b_PostProcess:
             dc_Results = self.PostProcess(dc_Results)
 
