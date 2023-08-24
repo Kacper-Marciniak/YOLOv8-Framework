@@ -119,6 +119,12 @@ Model class returns results in a form of dictionary with following keys:
 - ```time```: Full processing time in ms [float]
 - ```"inference_time"```: Inference time in ms [float]
 
+When detecting or segmenting small objects in large images, tiling can be useful - it divides the input image into several smaller tiles, which are passed to the ML model. The results are merged and presented for the full resolution image.
+
+```python
+from ml_model.CModelML import CModelML as Model
+c_Model = Model(i_TileSize=500) # Initialize model with tiling enabled and tile shape of 500x500
+```
 
 ## Use of prepared scripts
 

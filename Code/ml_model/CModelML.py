@@ -18,6 +18,7 @@ class CModelML():
     * f_Thresh: float = DEFAULT_MODEL_THRESH - confidence score threshold
     * s_ForceDevice: str = '' - force device (f.e. 'cpu', 'cuda:0')
     * b_PostProcess: bool - enable post-processing
+    * i_TileSize: int - tile size
     """
     def __init__(
             self, 
