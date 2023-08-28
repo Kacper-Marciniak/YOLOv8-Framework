@@ -55,6 +55,7 @@ def resultStiching(l_Results: list[dict], l_Coords: list):
                 dc_TileResults["bbox"][:,1] += y1
                 dc_TileResults["bbox"][:,3] += y1
                 for i,_ in enumerate(dc_TileResults["polygon"]):
+                    if not len(dc_TileResults["polygon"][i]): continue
                     dc_TileResults["polygon"][i][:,0] += x1
                     dc_TileResults["polygon"][i][:,1] += y1
 

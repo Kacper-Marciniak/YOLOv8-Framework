@@ -70,7 +70,7 @@ YOLO-FRAMEWORK
 ### Model weights and configuration
 
 Framework can be used with custom yolo models. By default CModelML class loads weights from [models directory](models) - ```models/model.pt```.
-Custom path can be used as well. Important: when using local models (either with default or custom path) dataset configuration file ```data.yaml``` has to be in the same directory as weights file. Example .yaml coonfiguration file from COCO dataset can be viewed [here](https://github.com/ultralytics/ultralytics/blob/main/ultralytics/cfg/datasets/coco.yaml). ```data.yaml``` for custom datasets is created when using dataset [preparation script](#prepare-dataset).
+Custom path can be used as well.
 
 ```python
 from ml_model.CModelML import CModelML as Model
@@ -89,7 +89,7 @@ c_Model = Model('yolov8n.pt')
 Additional parameters of CModelML class can be tweaked:
 * ```f_Thresh``` - confidence score threshold [float]
 * ```s_ForceDevice```:  force device (f.e. 'cpu', 'cuda:0') [str]
-* ``b_PostProcess``: enable post-processing [bool]
+* ``b_SAMPostProcess``: enable additional post-processing with Segment Anything Model (SAM) [bool]
 
 ### Inference and results
 

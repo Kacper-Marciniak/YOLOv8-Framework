@@ -10,6 +10,7 @@ from ultralytics import YOLO
 from parameters.parameters import DEFAULT_MODEL_THRESH, ALLOWED_INPUT_FILES
 from path.root import ROOT_DIR
 from utility.tiles import makeTiles, resultStiching
+from ultralytics.models.sam import Predictor as SAM
 
 class CModelML():
     """
@@ -17,7 +18,7 @@ class CModelML():
     * s_PathWeights: str - path to weights file or name of official YOLOv8 model
     * f_Thresh: float = DEFAULT_MODEL_THRESH - confidence score threshold
     * s_ForceDevice: str = '' - force device (f.e. 'cpu', 'cuda:0')
-    * b_PostProcess: bool - enable post-processing
+    * b_SAMPostProcess: bool - enable post-processing using Segment Anything Model (SAM)
     * i_TileSize: int - tile size
     """
     def __init__(
@@ -25,7 +26,7 @@ class CModelML():
             s_PathWeights: str, 
             f_Thresh:float = DEFAULT_MODEL_THRESH, 
             s_ForceDevice:str = '',
-            b_PostProcess: bool = True,
+            b_SAMPostProcess: bool = True,
             i_TileSize: int = None
         ):
         # Set device
@@ -46,24 +47,24 @@ class CModelML():
         self.s_Task = 'detect' if self.C_Model.task != 'segment' else 'segment'
         
         # Load class names definition
-        sConfigFilePath = os.path.join(os.path.dirname(s_PathWeights), 'data.yaml')
-        if not os.path.exists(sConfigFilePath): 
-            print(f"Local configuration file {sConfigFilePath} doesn't exist. Loading default COCO configuration.")
-            sConfigFilePath = os.path.join(ROOT_DIR, 'configuration', 'data_coco.yaml')
-        with open(sConfigFilePath,'r') as _File:
-            self.l_ClassNames = yaml.safe_load(_File)['names']
-            if isinstance(self.l_ClassNames, dict):
-                self.l_ClassNames = list(self.l_ClassNames.values())
-            elif not isinstance(self.l_ClassNames, list):
-                raise Exception(f"Invalid class definition in {sConfigFilePath} configuration file!")
-            else:
-                self.l_ClassNames = list(self.l_ClassNames)
-            print(f"Class names:")
-            for s_Class in self.l_ClassNames:
-                print(f"\t* {s_Class}")
+        self.l_ClassNames = self.C_Model.names
+        if isinstance(self.l_ClassNames, dict):
+            self.l_ClassNames = list(self.l_ClassNames.values())
+        else:
+            self.l_ClassNames = list(self.l_ClassNames)
+        print(f"Class names:")
+        for s_Class in self.l_ClassNames:
+            print(f"\t* {s_Class}")
 
-        # Post-processing
-        self.b_PostProcess = b_PostProcess
+        # SAM Post-processing
+        self.b_PostProcess = b_SAMPostProcess
+        if self.b_PostProcess:
+            # Change task to 'segment'
+            self.s_Task = 'segment'
+            # Create SAM predictor
+            self.C_SAMModel = SAM(overrides=dict(conf=self.f_Thresh, task='segment', mode='predict', model='sam_b.pt', save=False, verbose=False))            
+        else:
+            self.C_SAMModel = None
 
         # Tiling
         self.i_TileSize = i_TileSize
@@ -86,8 +87,10 @@ class CModelML():
             # Format results
             if _Results.boxes.cls.size(dim=0):                
                 a_Bboxes = np.round(_Results.boxes.xyxy.cpu().numpy()).astype(int)
-                if self.s_Task == 'segment':
+                if self.s_Task == 'segment' and not self.b_PostProcess:
                     l_Polygons = [np.array(np.round(_Polygon),dtype=np.int32) for _Polygon in _Results.masks.xy]
+                else:
+                    l_Polygons = [[]]*a_Bboxes.shape[0]
                 a_Scores = _Results.boxes.conf.cpu().numpy().astype(float)
                 a_Classes = _Results.boxes.cls.cpu().numpy().astype(int)
                 f_InferenceTime = sum(list(_Results.speed.values()))
@@ -144,6 +147,10 @@ class CModelML():
         # Tile stiching
         dc_Results = resultStiching(l_Results, lCoords)
 
+        # SAM post-processing
+        if self.b_PostProcess:
+            dc_Results = self.PostProcess(_Input, dc_Results)
+
         dc_Results["img_shape"] = _Input.shape
         dc_Results["task"] = self.s_Task
         dc_Results["names"] = self.l_ClassNames
@@ -153,14 +160,25 @@ class CModelML():
         for _Bbox,_Score,_Class in zip(dc_Results['bbox'],dc_Results['score'],dc_Results['class']):
             print(f"\t* Class \'{self.l_ClassNames[_Class]}\' detected with confidence {_Score:.2f}: {_Bbox.tolist()}")
 
-        # Post-processing
-        if self.b_PostProcess:
-            dc_Results = self.PostProcess(dc_Results)
-
         sys.stdout = sys.__stdout__
         
         return dc_Results
 
-    def PostProcess(self, dc_Results: dict):        
-        #TODO: implement post-processing 
+    def PostProcess(self, a_Img: np.ndarray, dc_Results: dict):
+        try:
+            self.C_SAMModel.set_image(a_Img)  # set with np.ndarray
+
+            for i,a_Bbox in enumerate(dc_Results['bbox']):
+                _Results = self.C_SAMModel(bboxes=a_Bbox)[0]
+                # Format results
+                if len(_Results.masks.data):                
+                    dc_Results['polygon'][i] = np.array(np.round(_Results.masks.xy[0]),dtype=np.int32)
+                    x,y,w,h = cv.boundingRect(dc_Results['polygon'][i])
+                    dc_Results['bbox'][i] = np.array([x,y,x+w,y+h],dtype=int)
+
+            # Reset image
+            self.C_SAMModel.reset_image()
+        except Exception as E:
+            print(f"Exception {E} during SAM post-processing.")
+        
         return dc_Results

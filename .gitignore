@@ -123,7 +123,9 @@ dmypy.json
 
 # Models
 *.pt
+*.pth
 models/*.pt
+models/*.pth
 models/*.yaml
 
 # Datasets
