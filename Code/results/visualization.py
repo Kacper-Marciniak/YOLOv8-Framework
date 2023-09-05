@@ -111,3 +111,62 @@ def drawResults(a_Img: np.ndarray, dc_Results: dict, _Size: tuple|int = None, b_
         cv.putText(a_Img, f"Processing time: {dc_Results['time']:.1f}", (0,a_Img.shape[0]), cv.FONT_HERSHEY_DUPLEX, 1.0, (255,255,255), 1, cv.LINE_AA)
     
     return a_Img
+
+def drawResultsSAM(a_Img: np.ndarray, dc_Results: dict, l_InputPoints: list, _Size: tuple|int = None, b_DrawInferenceTime: bool = False):
+    
+    # Resize input image
+    if isinstance(_Size,tuple):
+        f_ResizeX = _Size[0] / a_Img.shape[1]
+        f_ResizeY = _Size[1] / a_Img.shape[0]
+    elif isinstance(_Size,int):
+        f_ResizeX = _Size / max(a_Img.shape[:2])
+        f_ResizeY = f_ResizeX
+    else:
+        f_ResizeX = 1
+        f_ResizeY = 1
+
+    a_Img = cv.resize(a_Img, (int(f_ResizeX*a_Img.shape[1]), int(f_ResizeY*a_Img.shape[0])))
+    a_OverlayMasks = np.zeros_like(a_Img)
+        
+    
+    # Draw objects
+    for i,_ in enumerate(zip(dc_Results['class'])):
+        
+        t_Colour = getColour(i)
+        
+        # Draw masks for instance segmentation
+        a_Polygon = dc_Results['polygon'][i].copy()
+
+        a_Polygon[:,0], a_Polygon[:,1] = a_Polygon[:,0]*f_ResizeX, a_Polygon[:,1]*f_ResizeY
+
+        a_Mask = cv.drawContours(np.zeros((a_OverlayMasks.shape[0],a_OverlayMasks.shape[1],1),dtype=np.uint8), [a_Polygon], 0, 255, -1, cv.LINE_AA)
+        a_TmpMask = np.zeros_like(a_OverlayMasks)
+        a_TmpMask[a_Mask[:,:,0]>0] = t_Colour
+            
+        a_Indices1, a_Indices2 = np.sum(a_OverlayMasks,2)>0, np.sum(a_TmpMask,2)>0
+        a_Indices = np.logical_and(a_Indices1,a_Indices2)
+        a_OverlayMasks[a_Indices] = np.clip(np.round(a_TmpMask[a_Indices]*0.50+a_OverlayMasks[a_Indices]*0.50).astype(np.uint8),0,255)
+        a_Indices = np.logical_and(np.logical_not(a_Indices1),a_Indices2)
+        a_OverlayMasks[a_Indices] = a_TmpMask[a_Indices]
+            
+        del(a_Indices1)
+        del(a_Indices2)
+        del(a_Indices)
+        del(a_TmpMask)
+
+    # Draw crosshair
+
+    cv.line(a_Img, (a_Img.shape[1]//2,0),(a_Img.shape[1]//2,a_Img.shape[0]), (0,255,0), 1)
+    cv.line(a_Img, (0,a_Img.shape[0]//2),(a_Img.shape[1],a_Img.shape[0]//2), (0,255,0), 1)
+    for pt in l_InputPoints: 
+        cv.circle(a_Img, (int(pt[0]*f_ResizeX),int(pt[1]*f_ResizeY)), 3, (0,255,0), -1)
+
+    # Create final preview image
+    a_Indices = np.sum(a_OverlayMasks,axis=2)>0  
+    a_Img[a_Indices] = np.clip(np.round(a_Img[a_Indices]*0.50+a_OverlayMasks[a_Indices]*0.50).astype(np.uint8),0,255)
+
+    if b_DrawInferenceTime:
+        cv.putText(a_Img, f"Processing time: {dc_Results['time']:.1f}", (0,a_Img.shape[0]), cv.FONT_HERSHEY_DUPLEX, 1.0, (0,0,0), 2, cv.LINE_AA)
+        cv.putText(a_Img, f"Processing time: {dc_Results['time']:.1f}", (0,a_Img.shape[0]), cv.FONT_HERSHEY_DUPLEX, 1.0, (255,255,255), 1, cv.LINE_AA)
+    
+    return a_Img

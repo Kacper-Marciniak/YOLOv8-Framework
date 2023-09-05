@@ -2,19 +2,22 @@
 Preview inference from camera
 """
 
-import os
 import cv2 as cv
 import time
+import numpy as np
 
-from ml_model.CModelML import CModelML as Model
-from path.root import ROOT_DIR
-from results.visualization import drawResults
+from ml_model.CModelSAM import CModelSAM as Model
+from results.visualization import drawResultsSAM
 from camera.CCamera import CCamera as Camera
 
 # Target FPS value
 i_TargetFPS = 10
 # Confidence threshold value
-f_Thresh = 0.50
+f_Thresh = 0.75
+
+def on_change(value): 
+    global i_InputRadius
+    i_InputRadius = max(1,value)
 
 if __name__ == "__main__":
     # Initialize camera
@@ -22,9 +25,7 @@ if __name__ == "__main__":
 
     # Initialize model
     c_Model = Model(
-        s_PathWeights = os.path.join(ROOT_DIR,'models','model.pt'), # Load custom model from 'models' directory
         f_Thresh = f_Thresh, # Confidence threshold value
-        b_SAMPostProcess = True, # Enable SAM post-processing and segmentation
     )
 
     while(True):
@@ -33,11 +34,15 @@ if __name__ == "__main__":
         # Get new frame
         a_Img = CCamera.grabFrame()
 
-        # Inference - object detection
-        dc_Results = c_Model.Detect(a_Img)
+        l_Points = [
+            [a_Img.shape[1]//2,a_Img.shape[0]//2]
+        ]
+
+        # Inference - object detection        
+        dc_Results = c_Model.Detect(a_Img, l_Points=l_Points, b_PrintOutput=False)
 
         # Visualize results with opencv GUI
-        a_Preview = drawResults(a_Img.copy(), dc_Results, _Size=1000, b_DrawInferenceTime=True)
+        a_Preview = drawResultsSAM(a_Img.copy(), dc_Results, l_Points, _Size=1000, b_DrawInferenceTime=True)
         cv.imshow("Camera", a_Preview)
         
         f_Time = (time.time() - f_Time)*1000.0

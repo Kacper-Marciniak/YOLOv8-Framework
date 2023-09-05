@@ -20,8 +20,8 @@ if __name__ == "__main__":
 
     # Initialize model
     c_Model = Model(
-        s_PathWeights = 'yolov8l-seg.pt', # YOLOv8-Large segmentation model trained on COCO dataset
-        f_Thresh = f_Thresh # Confidence threshold value
+        s_PathWeights = 'yolov8l-seg.pt', # YOLOv8-Large detection model trained on COCO dataset
+        f_Thresh = f_Thresh, # Confidence threshold value
     )
 
     while(True):
