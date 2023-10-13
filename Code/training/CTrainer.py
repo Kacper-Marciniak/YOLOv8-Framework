@@ -2,7 +2,7 @@
 Trainer class for ML model training
 """
 
-import yaml, os,  torch, gc, shutil
+import os, torch, gc, shutil
 from datetime import datetime
 import matplotlib.pyplot as plt
 from ultralytics import YOLO
@@ -82,7 +82,6 @@ class CTrainer():
             name =              os.path.basename(self.s_TrainingOutputPath),
             exist_ok =          True,
             cache =             True,
-            v5loader =          False,
             plots =             True,
             patience =          25,
             close_mosaic =      5,
