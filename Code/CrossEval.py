@@ -84,10 +84,13 @@ if __name__ == "__main__":
             _Results = json.load(_File)
             _File.close()
         for sKey in _Results:
-            if not 'mean' in sKey.lower(): continue
-            
-            if not (sKey in list(dc_Results.keys())): dc_Results[sKey] = []
-            dc_Results[sKey].append(_Results[sKey])
+            if isinstance(_Results[sKey], dict):
+                for sClassName in _Results[sKey].keys():
+                    if not (f"{sKey}_{sClassName}" in list(dc_Results.keys())): dc_Results[f"{sKey}_{sClassName}"] = []
+                    dc_Results[f"{sKey}_{sClassName}"].append(_Results[sKey][sClassName])
+            else:
+                if not (sKey in list(dc_Results.keys())): dc_Results[sKey] = []
+                dc_Results[sKey].append(_Results[sKey])
     
     dc_OutputData = {}
 

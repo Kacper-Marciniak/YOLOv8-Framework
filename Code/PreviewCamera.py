@@ -2,12 +2,10 @@
 Preview inference from camera
 """
 
-import os
 import cv2 as cv
 import time
 
 from ml_model.CModelML import CModelML as Model
-from path.root import ROOT_DIR
 from results.visualization import drawResults
 from camera.CCamera import CCamera as Camera
 
@@ -22,7 +20,7 @@ if __name__ == "__main__":
 
     # Initialize model
     c_Model = Model(
-        s_PathWeights = 'yolov8n-seg.pt', # Load YOLOv8n model
+        s_PathWeights = 'yolov8n-seg.pt', # Load YOLOv8n segmentation model
         f_Thresh = f_Thresh, # Confidence threshold value
         b_SAMPostProcess = False, # Disable SAM post-processing and segmentation
     )
@@ -45,7 +43,7 @@ if __name__ == "__main__":
         
         cv.waitKey(f_Time)
 
-        # Break from loop when openCV window is closed
+        # Break from loop when OpenCV window is closed
         if not cv.getWindowProperty("Camera", cv.WND_PROP_VISIBLE): break
     
     try: 
