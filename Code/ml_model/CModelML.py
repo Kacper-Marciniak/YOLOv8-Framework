@@ -3,12 +3,11 @@ Model class definition
 """
 
 import torch
-import yaml, os, time, sys
+import os, time, sys
 import numpy as np
 import cv2 as cv
 from ultralytics import YOLO
 from parameters.parameters import DEFAULT_MODEL_THRESH, ALLOWED_INPUT_FILES
-from path.root import ROOT_DIR
 from utility.tiles import makeTiles, resultStiching
 from ultralytics.models.sam import Predictor as SAM
 
@@ -26,8 +25,8 @@ class CModelML():
             s_PathWeights: str, 
             f_Thresh:float = DEFAULT_MODEL_THRESH, 
             s_ForceDevice:str = '',
-            b_SAMPostProcess: bool = True,
-            i_TileSize: int = None
+            b_SAMPostProcess: bool = False,
+            i_TileSize: int|None = None
         ):
         # Set device
         self._Device = torch.device(0) if s_ForceDevice == '' else s_ForceDevice
@@ -134,7 +133,7 @@ class CModelML():
         print(f"\n\n[YOLOv8 - {self.s_DeviceName}] image shape: {_Input.shape[1]}x{_Input.shape[0]}. Task: {self.s_Task}")
             
         # Tiling
-        if self.i_TileSize is not None and max(_Input.shape) > self.i_TileSize:
+        if not (self.i_TileSize is None) and max(_Input.shape) > self.i_TileSize:
             lCoords = makeTiles(_Input, self.i_TileSize, self.f_TileOVerlap)
         else:
             lCoords = [[[0,0],[_Input.shape[1],_Input.shape[0]]]]

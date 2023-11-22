@@ -169,7 +169,7 @@ output_data_folder
 Parameters in Train.py:
 - ```i_Epochs``` - number of training epochs
 - ```i_BatchSize``` - training batch size
-- ```f_ConfThreshTest``` - confidence threshold during training
+- ```f_ConfThreshTest``` - confidence threshold during testing
 
 Advanced parameters are stored in [configuration/training.yaml](configuration/training.yaml).
 
@@ -262,3 +262,26 @@ Parameters in PreviewCamera.py:
 <p align="center"><img src="readme/Example_1.jpg" width= 90% style="max-width:500px"></p>
 <p align="center"><img src="readme/Example_2.jpg" width= 90% style="max-width:500px"></p>
 <p align="center"><img src="readme/Example_3.jpg" width= 90% style="max-width:500px"></p>
+
+### Cross-evaluation model
+
+1. Run [CrossEval.py](Code/CrossEval.py)
+2. Select input folder with images and labels
+3. Select output dataset folder in desired directory - f.e. 'datasets/datastet-example'
+4. Select [model size](https://docs.ultralytics.com/models/yolov8/#supported-modes)
+5. System will split data into N segments, prepare models and perform cross validation.
+6. Cross validation output is saved to the [validation_results](validation_results)
+
+```
+validation_results
+|_ CrossEval_20230101_000000 # Folder with validation date
+    |_ results_final.json # Validation numeric results 
+    ...
+...
+```
+
+Parameters in CrossEval.py:
+- ```iNSegments``` - number of sub-datasets used during cross validation
+- ```i_Epochs``` - number of training epochs
+- ```i_BatchSize``` - training batch size
+- ```f_ConfThreshTest``` - confidence threshold during testing

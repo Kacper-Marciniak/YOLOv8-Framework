@@ -11,14 +11,14 @@ from parameters.parameters import DEFAULT_MODEL_THRESH
 
 from path.root import ROOT_DIR
 
-def Validate(s_DatasetDirectory: str, f_Thresh: float = DEFAULT_MODEL_THRESH, b_SaveOutput: bool = True):
+def Validate(s_DatasetDirectory: str, f_Thresh: float = DEFAULT_MODEL_THRESH, b_SaveOutput: bool = True, sCustomWeightsPath: str|None = None):
     """
     Run system validation. 
     """
 
     # Initialize model
     C_Model = Model(
-        s_PathWeights = os.path.join(ROOT_DIR,'models','model.pt'),
+        s_PathWeights = os.path.join(ROOT_DIR,'models','model.pt') if (sCustomWeightsPath is None) else sCustomWeightsPath,
         f_Thresh = 0.75
     )
     s_PathConfigDataset = os.path.join(s_DatasetDirectory, 'data.yaml')
@@ -45,7 +45,7 @@ def Validate(s_DatasetDirectory: str, f_Thresh: float = DEFAULT_MODEL_THRESH, b_
     )
 
     a_ClassIds = _Metrics.ap_class_index
-    _QualityMetrics = _Metrics.box if C_Model.s_Task != 'segment' else _Metrics.seg
+    _QualityMetrics = _Metrics.box if C_Model.C_Model.task != 'segment' else _Metrics.seg
 
 
     dc_Results = {

@@ -11,7 +11,7 @@ from path.root import ROOT_DIR
 # Training epochs
 i_Epochs = 5
 f_ConfThreshTest = 0.5
-i_BatchSize = 16
+i_BatchSize = 8
 
 if __name__ == "__main__":
     # Choose model type

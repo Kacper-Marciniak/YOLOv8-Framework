@@ -8,7 +8,7 @@ import os
 from path.root import ROOT_DIR
 
 # Confidence threshold value
-f_Thresh = 0.75
+f_Thresh = 0.25
 
 if __name__ == "__main__":
     # Set path to test images
