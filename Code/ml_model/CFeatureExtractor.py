@@ -1,7 +1,3 @@
-# Feature extractor tak jak dla HOB
-# zadanie: sprawdzic ustawienia preprocessingu zdjec
-# per image czy per tile ???
-
 """
 ResNet based feature extractor
 """

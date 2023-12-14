@@ -54,7 +54,7 @@ class CCamera:
         Get input resolution
         """
         try:            
-            self.t_Shape = (self.CCamera.get(cv.CV_CAP_PROP_FRAME_WIDTH),self.CCamera.get(cv.CV_CAP_PROP_FRAME_WIDTH),3)
+            self.t_Shape = (int(self.CCamera.get(cv.CAP_PROP_FRAME_HEIGHT)),int(self.CCamera.get(cv.CAP_PROP_FRAME_WIDTH)),3)
         except:
             self.t_Shape = (-1,-1,-1)
         return self.t_Shape
