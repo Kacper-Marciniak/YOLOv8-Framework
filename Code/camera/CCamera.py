@@ -10,18 +10,19 @@ class CCamera:
         self.i_DeviceName = i_Name
         print(f"Trying to access camera {i_Name}...")
         self.CCamera = cv.VideoCapture(self.i_DeviceName, cv.CAP_DSHOW)
-        if not self.CCamera.isOpened(): raise Exception("Cannot open camera")
+        if not self.CCamera.isOpened(): raise Exception(f"Cannot open camera {self.i_DeviceName}")
+        self.getCameraResolution()
         print(f"Camera {self.i_DeviceName} is ready!")
 
     def setResolution(self, i_Width: int, i_Height: int):
         """
         Set new resolution
         """
-        print(f"Trying to change the resolution to {i_Width}x{i_Height}")
+        print(f"Trying to change the resolution to {i_Width}x{i_Height} for camera {self.i_DeviceName}")
         self.CCamera.set(cv.CAP_PROP_FRAME_WIDTH, i_Width) 
         self.CCamera.set(cv.CAP_PROP_FRAME_HEIGHT, i_Height)
-        self.t_Shape = self.getCameraResolution()
-        print(f"Resolution set to: {self.t_Shape[1]}x{self.t_Shape[0]}")
+        self.getCameraResolution()
+        print(f"Resolution set to: {self.t_Shape[1]}x{self.t_Shape[0]} for camera {self.i_DeviceName}")
 
     def grabFrame(self):
         """
