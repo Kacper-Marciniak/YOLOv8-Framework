@@ -21,7 +21,7 @@ class CTrainer():
         self._ClearCacheDataset()
 
         # Get project and run names
-        self.s_TrainingOutputPath = os.path.join(ROOT_DIR, r'training_output', str(datetime.now().strftime("%Y%m%d_%H%M%S")).replace(' ','_'))
+        self.s_TrainingOutputPath = os.path.join(ROOT_DIR, r'training_output', str(datetime.now().strftime("%Y%m%d_%H%M%S")).replace(' ','_')+f'_{s_ModelName}')
         
         # Create output directory
         os.makedirs(self.s_TrainingOutputPath, exist_ok=True)
@@ -39,7 +39,7 @@ class CTrainer():
         """
         if os.path.exists(s_DatasetDirectory):
             self.s_DatasetDirectory = s_DatasetDirectory
-        else:
+        else: 
             raise Exception("Dataset does not exist")
         
         if not os.path.exists(os.path.join(s_DatasetDirectory,'data.yaml')):
@@ -73,7 +73,7 @@ class CTrainer():
         print("Starting training task...")
 
         self.c_Model.train(
-            data =              os.path.join(self.s_DatasetDirectory, 'data.yaml'),
+            data =              os.path.join(self.s_DatasetDirectory, 'data.yaml') if not 'classify'==self.c_Model.task else self.s_DatasetDirectory,
             batch =             i_BatchSize,
             epochs =            max(1,i_Epochs), 
             imgsz =             TRAINING_PARAMETERS["imgsz"],
@@ -99,6 +99,7 @@ class CTrainer():
             mosaic =            TRAINING_PARAMETERS["mosaic"],    # image mosaic (probability)
             mixup =             TRAINING_PARAMETERS["mixup"],    # image mixup (probability)
             copy_paste =        TRAINING_PARAMETERS["copy_paste"],    # segment copy-paste (probability)
+            erasing =             TRAINING_PARAMETERS["erasing"],    # random erase (probability)  
             # LEARNING RATE
             lr0 =               TRAINING_PARAMETERS["lr0"],   # initial learning rate (SGD=1E-2, Adam=1E-3)
             lrf =               TRAINING_PARAMETERS["lrf"],   # final OneCycleLR learning rate (lr0 * lrf)
@@ -110,7 +111,7 @@ class CTrainer():
             warmup_epochs =     TRAINING_PARAMETERS["warmup_epochs"],    # warmup epochs (fractions ok)
             warmup_momentum =   TRAINING_PARAMETERS["warmup_momentum"],    # warmup initial momentum
             warmup_bias_lr =    TRAINING_PARAMETERS["warmup_bias_lr"],    # warmup initial bias lr
-            box =               TRAINING_PARAMETERS["box"],   # box loss gain
+            box =               TRAINING_PARAMETERS["box"],     # box loss gain
             cls =               TRAINING_PARAMETERS["cls"],    # cls loss gain
         )
 

@@ -9,9 +9,9 @@ from parameters.TrainingParameters import AVAILABLE_MODELS
 from path.root import ROOT_DIR
 
 # Training epochs
-i_Epochs = 5
+i_Epochs = 25
 f_ConfThreshTest = 0.5
-i_BatchSize = 8
+i_BatchSize = 16
 
 if __name__ == "__main__":
     # Choose model type
@@ -20,7 +20,7 @@ if __name__ == "__main__":
     s_DatasetDir = askdirectory("Select dataset folder", initialdir=os.path.join(ROOT_DIR,'datasets'))
 
     try:
-        # Initialize trainer class
+        # Initialize traine mr class
         c_Trainer = CTrainer(
             s_ModelName = s_ModelName,
             s_DatasetDirectory = s_DatasetDir
@@ -29,7 +29,7 @@ if __name__ == "__main__":
         c_Trainer.PrintInfo()
         # Train model
         c_Trainer.Train(i_Epochs, i_BatchSize)
-        # Copy data configuration 
+        # Copy data configuration
         c_Trainer._CopyDataConfig()
         # Run test inference
         c_Trainer.TestInference(f_ConfThreshTest)
