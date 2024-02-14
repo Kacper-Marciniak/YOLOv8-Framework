@@ -51,7 +51,7 @@ if __name__ == "__main__":
         try:
             # Initialize trainer class
             c_Trainer = CTrainer(
-                s_ModelName = s_ModelName,
+                s_ModelConfig = s_ModelName,
                 s_DatasetDirectory = s_DatasetDir
             )
             # Train model

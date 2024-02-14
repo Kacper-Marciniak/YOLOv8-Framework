@@ -7,11 +7,11 @@ from utility.GUI import askdirectory, choosefromlist
 from training.CTrainer import CTrainer
 from parameters.TrainingParameters import AVAILABLE_MODELS
 from path.root import ROOT_DIR
-
+ 
 # Training epochs
-i_Epochs = 25
+i_Epochs = 15
 f_ConfThreshTest = 0.5
-i_BatchSize = 16
+i_BatchSize = 32
 
 if __name__ == "__main__":
     # Choose model type
@@ -22,7 +22,7 @@ if __name__ == "__main__":
     try:
         # Initialize traine mr class
         c_Trainer = CTrainer(
-            s_ModelName = s_ModelName,
+            s_ModelConfig = s_ModelName,
             s_DatasetDirectory = s_DatasetDir
         )
         # Print trainer info
