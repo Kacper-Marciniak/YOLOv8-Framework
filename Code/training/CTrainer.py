@@ -10,11 +10,15 @@ import numpy as np
 
 from parameters.TrainingParameters import *
 from parameters.parameters import ALLOWED_INPUT_FILES
+from parameters.TrainingParameters import AVAILABLE_MODELS
 
 from path.root import ROOT_DIR
 
 class CTrainer():
-    def __init__(self, s_ModelName: str, s_DatasetDirectory: str):
+    def __init__(self, s_ModelConfig: str, s_DatasetDirectory: str):
+        s_ModelConfig = s_ModelConfig.lower()
+        s_ModelName = os.path.basename(s_ModelConfig).split('.')[0]
+
         # Get dataset directory
         self._GetDatasetDir(s_DatasetDirectory)
         # Clear cache and remove tmp files
@@ -31,7 +35,17 @@ class CTrainer():
         torch.cuda.empty_cache()
 
         # Initialize YOLO architecture
-        self.c_Model = YOLO(f"{s_ModelName}.pt")
+        if not (s_ModelConfig.split('.')[-1].lower() in ['pt','yaml']):
+            if s_ModelConfig in AVAILABLE_MODELS:
+                s_ModelConfig += '.pt'
+            else:
+                s_ModelConfig += '.yaml'
+        
+        print(f"Model configuraton: {s_ModelConfig}")
+
+        self.c_Model = YOLO(s_ModelConfig)
+
+        print(f"Model {s_ModelName} initialized!")
 
     def _GetDatasetDir(self, s_DatasetDirectory: str):
         """
@@ -81,7 +95,7 @@ class CTrainer():
             project =           os.path.dirname(self.s_TrainingOutputPath),
             name =              os.path.basename(self.s_TrainingOutputPath),
             exist_ok =          True,
-            cache =             True,
+            cache =             'ram',
             plots =             True,
             patience =          25,
             close_mosaic =      5,
