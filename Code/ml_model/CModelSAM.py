@@ -25,43 +25,14 @@ class CModelSAM():
 
         self.l_ClassNames = ['SAM-segment']
 
-        self.C_SAMModel = SAM(overrides=dict(conf=self.f_Thresh, task='segment', mode='predict', model='sam_b.pt', save=False, verbose=False))
+        self.C_SAMModel = SAM(overrides=dict(conf=self.f_Thresh, task='segment', mode='predict', model='mobile_sam.pt', save=False, verbose=False))
 
         print(f'SAM successfully initialized.')
 
-    def __Inference(self, a_InputImg: np.ndarray | str, l_Points: list) -> list[Prediction]:
+    def setImage(self, _Input: np.ndarray | str):
         """
-        Inference
+        Set image for segmentation
         """
-        
-        l_Predictions = []
-
-        try:
-            self.C_SAMModel.set_image(a_InputImg)
-
-            _Results = self.C_SAMModel(points=l_Points)[0]
-            # Format results
-            for i,_Polygon in enumerate(_Results.masks.xy):
-                a_Polygon = np.array(np.round(_Polygon),dtype=np.int32)
-                x,y,w,h = cv.boundingRect(a_Polygon)
-                l_Bbox = [x,y,x+w,y+h]
-                l_Predictions.append(Prediction(self.l_ClassNames[0], 0, -1.0, l_Bbox, a_Polygon))
-
-            # Reset image
-            self.C_SAMModel.reset_image()
-        except Exception as E:
-            print(f"Exception {E} during SAM inference.")
-
-        return l_Predictions
-
-    def Detect(self, _Input: np.ndarray | str, l_Points: list, b_PrintOutput: bool = True, s_ImageID: str = None) -> ImageResults:
-        """
-        Perform detection on image
-        """   
-        f_Time = time.time()
-
-        if not b_PrintOutput:            
-            sys.stdout = open(os.devnull, 'w')
 
         # Check input
         if isinstance(_Input, np.ndarray): pass
@@ -74,10 +45,45 @@ class CModelSAM():
         else: 
             raise Exception("Invalid model input")
 
+        self.C_SAMModel.set_image(_Input)
 
-        print(f"\n\n[SAM] image shape: {_Input.shape[1]}x{_Input.shape[0]}")
+    def resetImage(self):
+        """
+        Reset image
+        """
+        self.C_SAMModel.reset_image()
+    
+    def __Inference(self, l_Bbox: list) -> list[Prediction]:
+        """
+        Inference
+        """
+        
+        l_Predictions = []
+
+        try:
+            _Results = self.C_SAMModel(bboxes=l_Bbox)[0]
+            # Format results
+            for i,_Polygon in enumerate(_Results.masks.xy):
+                a_Polygon = np.array(np.round(_Polygon),dtype=np.int32)
+                x,y,w,h = cv.boundingRect(a_Polygon)
+                l_Bbox = [x,y,x+w,y+h]
+                l_Predictions.append(Prediction(self.l_ClassNames[0], 0, -1.0, l_Bbox, a_Polygon))
+
+        except Exception as E:
+            print(f"Exception {E} during SAM inference.")
+
+        return l_Predictions
+
+    def Segment(self, _Input: np.ndarray | str, l_Bbox: list, b_PrintOutput: bool = True, s_ImageID: str = None) -> ImageResults:
+        """
+        Perform SAM segmentation on image, needs bounding box prompt
+        """   
+        f_Time = time.time()
+
+        if not b_PrintOutput:            
+            sys.stdout = open(os.devnull, 'w')
             
-        lPredictions = self.__Inference(_Input, l_Points)
+        lPredictions = self.__Inference(l_Bbox)
 
         c_Results = ImageResults(
             s_ImageID,

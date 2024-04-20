@@ -53,7 +53,7 @@ def drawResults(a_Img: np.ndarray, c_ImageResults: ImageResults, _Size: tuple|in
         
         # Draw masks for instance segmentation
         if _Pred.Polygon.exists():
-            a_Polygon = _Pred.get_polygon()
+            a_Polygon = _Pred.get_polygon().get_array()
 
             a_Polygon[:,0], a_Polygon[:,1] = a_Polygon[:,0]*f_ResizeX, a_Polygon[:,1]*f_ResizeY
 
@@ -75,7 +75,7 @@ def drawResults(a_Img: np.ndarray, c_ImageResults: ImageResults, _Size: tuple|in
         
         # Draw BBOX
         a_TmpMask = np.zeros_like(a_OverlayMasks)
-        a_Bbox = _Pred.get_bbox().scale_by(f_ResizeX, f_ResizeY).round()
+        a_Bbox = _Pred.get_bbox().scale_by(f_ResizeX, f_ResizeY).round().get_xyxy()
         cv.rectangle(a_TmpMask, (a_Bbox[0],a_Bbox[1]), (a_Bbox[2],a_Bbox[3]), t_Colour, 2, cv.LINE_AA) 
         
         # Put text
@@ -112,7 +112,7 @@ def drawResults(a_Img: np.ndarray, c_ImageResults: ImageResults, _Size: tuple|in
     
     return a_Img
 
-def drawResultsSAM(a_Img: np.ndarray, c_ImageResults: ImageResults, l_InputPoints: list, _Size: tuple|int = None, b_DrawInferenceTime: bool = False):
+def drawResultsSAM(a_Img: np.ndarray, c_ImageResults: ImageResults, l_InputBBOX: list, _Size: tuple|int = None, b_DrawInferenceTime: bool = False):
     
     # Resize input image
     if isinstance(_Size,tuple):
@@ -135,7 +135,7 @@ def drawResultsSAM(a_Img: np.ndarray, c_ImageResults: ImageResults, l_InputPoint
         t_Colour = getColour(i)
         
         # Draw masks for instance segmentation
-        a_Polygon = _pred.get_polygon()
+        a_Polygon = _pred.get_polygon().get_array()
 
         a_Polygon[:,0], a_Polygon[:,1] = a_Polygon[:,0]*f_ResizeX, a_Polygon[:,1]*f_ResizeY
 
@@ -154,12 +154,9 @@ def drawResultsSAM(a_Img: np.ndarray, c_ImageResults: ImageResults, l_InputPoint
         del(a_Indices)
         del(a_TmpMask)
 
-    # Draw crosshair
+    # Draw rectangle
 
-    cv.line(a_Img, (a_Img.shape[1]//2,0),(a_Img.shape[1]//2,a_Img.shape[0]), (0,255,0), 1)
-    cv.line(a_Img, (0,a_Img.shape[0]//2),(a_Img.shape[1],a_Img.shape[0]//2), (0,255,0), 1)
-    for pt in l_InputPoints: 
-        cv.circle(a_Img, (int(pt[0]*f_ResizeX),int(pt[1]*f_ResizeY)), 3, (0,255,0), -1)
+    cv.rectangle(a_Img, (l_InputBBOX[0],l_InputBBOX[1]), (l_InputBBOX[2],l_InputBBOX[3]), (0,255,0), 3)
 
     # Create final preview image
     a_Indices = np.sum(a_OverlayMasks,axis=2)>0  

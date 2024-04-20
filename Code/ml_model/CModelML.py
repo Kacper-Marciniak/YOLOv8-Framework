@@ -24,15 +24,20 @@ class CModelML():
     def __init__(
             self, 
             s_PathWeights: str, 
-            f_Thresh:float = DEFAULT_MODEL_THRESH, 
-            s_ForceDevice:str = '',
+            f_Thresh: float = DEFAULT_MODEL_THRESH, 
+            s_ForceDevice: str = '',
             b_SAMPostProcess: bool = False,
             i_TileSize: int|None = None
         ):
         # Set device
-        self._Device = torch.device(0) if s_ForceDevice == '' else s_ForceDevice
-        self.s_DeviceName = torch.cuda.get_device_name(self._Device) if self._Device != 'cpu' else 'CPU'
-        
+        try:
+            self._Device = torch.device(0) if s_ForceDevice == '' else s_ForceDevice
+            self.s_DeviceName = torch.cuda.get_device_name(self._Device) if self._Device != 'cpu' else 'CPU'
+        except: # No CUDA
+            print("No CUDA device found. Using CPU.")
+            self._Device = 'cpu'
+            self.s_DeviceName = 'CPU' 
+                
         # Set confidence threshold
         self.f_Thresh = np.clip(f_Thresh,0.001,0.999)
 
@@ -139,7 +144,7 @@ class CModelML():
             l_Results.append(self.__Inference(_Input[y1:y2,x1:x2]))
 
         # Tile stiching
-        l_Results = resultStiching(l_Results, lCoords, _Input.shape)
+        l_Results = resultStiching(l_Results, lCoords)
 
         c_ImageResults = ImageResults(
             s_ImageID,
