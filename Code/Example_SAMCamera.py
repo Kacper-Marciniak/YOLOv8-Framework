@@ -39,10 +39,10 @@ if __name__ == "__main__":
         ]
 
         # Inference - object detection        
-        dc_Results = c_Model.Detect(a_Img, l_Points=l_Points, b_PrintOutput=False)
+        c_ImageResults = c_Model.Detect(a_Img, l_Points=l_Points, b_PrintOutput=False)
 
         # Visualize results with opencv GUI
-        a_Preview = drawResultsSAM(a_Img.copy(), dc_Results, l_Points, _Size=1000, b_DrawInferenceTime=True)
+        a_Preview = drawResultsSAM(a_Img.copy(), c_ImageResults, l_Points, _Size=1000, b_DrawInferenceTime=True)
         cv.imshow("Camera", a_Preview)
         
         f_Time = (time.time() - f_Time)*1000.0

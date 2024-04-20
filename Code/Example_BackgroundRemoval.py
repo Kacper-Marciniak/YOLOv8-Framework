@@ -31,10 +31,12 @@ if __name__ == "__main__":
         a_Img = CCamera.grabFrame()
 
         # Inference - object detection
-        dc_Results = c_Model.Detect(a_Img, b_PrintOutput = False)
+        c_Results = c_Model.Detect(a_Img, b_PrintOutput = False)
+
+        c_Results.get_predictions_by_class("person")
 
         # Get all instances of 'person' class
-        l_PersonContours = [a_Cnt for a_Cnt, i_ClassID in zip(dc_Results['polygon'],dc_Results['class']) if i_ClassID==0]
+        l_PersonContours = [_pred.get_polygon() for _pred in c_Results.get_predictions_by_class("person")]
 
         # Create mask
         a_Mask = np.zeros((a_Img.shape[0],a_Img.shape[1],1))

@@ -10,6 +10,7 @@ from ultralytics import YOLO
 from parameters.parameters import DEFAULT_MODEL_THRESH, ALLOWED_INPUT_FILES
 from utility.tiles import makeTiles, resultStiching
 from ultralytics.models.sam import Predictor as SAM
+from ml_model.CResults import ImageResults, Prediction, Bbox, Polygon
 
 class CModelML():
     """
@@ -43,7 +44,7 @@ class CModelML():
         self.C_Model.conf_thresh = self.f_Thresh
         self.C_Model.to(self._Device)
 
-        self.s_Task = 'detect' if self.C_Model.task != 'segment' else 'segment'
+        self.s_Task = self.C_Model.task
         
         # Load class names definition
         self.l_ClassNames = self.C_Model.names
@@ -71,13 +72,12 @@ class CModelML():
 
         print(f'Model successfully initialized. Task: {self.s_Task}')
 
-    def __Inference(self, a_InputImg: np.ndarray | str):
+    def __Inference(self, a_InputImg: np.ndarray | str) -> list[Prediction]:
         """
         Inference
         """
 
-        a_Bboxes, l_Polygons, a_Scores, a_Classes = np.array([]), [], np.array([]), np.array([])
-        f_InferenceTime = np.nan
+        l_Predictions = []
 
         try:
             # Perform detection
@@ -92,24 +92,19 @@ class CModelML():
                     l_Polygons = [[]]*a_Bboxes.shape[0]
                 a_Scores = _Results.boxes.conf.cpu().numpy().astype(float)
                 a_Classes = _Results.boxes.cls.cpu().numpy().astype(int)
-                f_InferenceTime = sum(list(_Results.speed.values()))
 
                 a_Indices = a_Scores>=self.f_Thresh
                 a_Bboxes, a_Scores, a_Classes = a_Bboxes[a_Indices], a_Scores[a_Indices], a_Classes[a_Indices]
                 l_Polygons= [_Polygon for _Polygon, _Val in zip(l_Polygons, a_Indices) if _Val]
 
+                l_Predictions = [Prediction(self.l_ClassNames[a_Classes[i]], a_Classes[i], a_Scores[i], a_Bboxes[i], l_Polygons[i] if len(l_Polygons) else np.array([])) for i in range(len(a_Classes))]
+
         except Exception as E:
             print(f"Exception {E} during inference.")
 
-        return {
-            "bbox": a_Bboxes,
-            "polygon": l_Polygons,
-            "score": a_Scores,
-            "class": a_Classes,
-            "inference_time": f_InferenceTime,
-        }
+        return l_Predictions
 
-    def Detect(self, _Input: np.ndarray | str, b_PrintOutput: bool = True):
+    def Detect(self, _Input: np.ndarray | str, b_PrintOutput: bool = True, s_ImageID: str = None) -> ImageResults:
         """
         Perform detection on image
         """   
@@ -144,40 +139,43 @@ class CModelML():
             l_Results.append(self.__Inference(_Input[y1:y2,x1:x2]))
 
         # Tile stiching
-        dc_Results = resultStiching(l_Results, lCoords)
+        l_Results = resultStiching(l_Results, lCoords, _Input.shape)
+
+        c_ImageResults = ImageResults(
+            s_ImageID,
+            _Input.shape,
+            l_Results,
+            (time.time()-f_Time)*1000.0
+        )
 
         # SAM post-processing
         if self.b_PostProcess:
-            dc_Results = self.PostProcess(_Input, dc_Results)
+            c_ImageResults = self.PostProcess(_Input, c_ImageResults)
 
-        dc_Results["img_shape"] = _Input.shape
-        dc_Results["task"] = self.s_Task
-        dc_Results["names"] = self.l_ClassNames
-        dc_Results["time"] = (time.time()-f_Time)*1000.0
 
-        print(f"Detected {len(dc_Results['class'])} objects, {len(np.unique(dc_Results['class']))} unique classes. Inference time: {dc_Results['time']:.3f} ms")
-        for _Bbox,_Score,_Class in zip(dc_Results['bbox'],dc_Results['score'],dc_Results['class']):
-            print(f"\t* Class \'{self.l_ClassNames[_Class]}\' detected with confidence {_Score:.2f}: {_Bbox.tolist()}")
+        print(f"Detected {c_ImageResults.get_n_predictions()} objects. Inference time: {c_ImageResults.get_inference_time():.3f} ms")
+        c_ImageResults.list_results()
 
         sys.stdout = sys.__stdout__
         
-        return dc_Results
+        return c_ImageResults
 
-    def PostProcess(self, a_Img: np.ndarray, dc_Results: dict):
+    def PostProcess(self, a_Img: np.ndarray, c_ImageResults: ImageResults) -> list[Prediction]:
         try:
             self.C_SAMModel.set_image(a_Img)  # set with np.ndarray
-
-            for i,a_Bbox in enumerate(dc_Results['bbox']):
-                _Results = self.C_SAMModel(bboxes=a_Bbox)[0]
+            for i,_Pred in c_ImageResults.get_predictions():
+                _Results = self.C_SAMModel(bboxes=_Pred.get_bbox().round().get_xyxy())[0]
                 # Format results
-                if len(_Results.masks.data):                
-                    dc_Results['polygon'][i] = np.array(np.round(_Results.masks.xy[0]),dtype=np.int32)
-                    x,y,w,h = cv.boundingRect(dc_Results['polygon'][i])
-                    dc_Results['bbox'][i] = np.array([x,y,x+w,y+h],dtype=int)
+                if len(_Results.masks.data):
+                    a_Polygon = np.array(np.round(_Results.masks.xy[0]),dtype=np.int32)
+                    _Pred.Polygon = Polygon(a_Polygon)
+                    x,y,w,h = cv.boundingRect(a_Polygon)
+                    _Pred.BoundingBox = Bbox([x,y,x+w,y+h])
+                    c_ImageResults.set_prediction_by_index(i, _Pred)
 
             # Reset image
             self.C_SAMModel.reset_image()
         except Exception as E:
             print(f"Exception {E} during SAM post-processing.")
         
-        return dc_Results
+        return c_ImageResults

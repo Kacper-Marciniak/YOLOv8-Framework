@@ -1,9 +1,9 @@
 import os
 import json
 
-from utility.BboxOperations import convertAbsToRel, convertXYXYToXYWH
+from ml_model.CResults import ImageResults, Prediction
 
-def saveResultsYolo(dc_Results: dict, s_PathToSave: str):
+def saveResultsYolo(c_ImageResults: ImageResults, s_PathToSave: str):
     s_PathToSave = s_PathToSave.lower()
     if not os.path.exists(os.path.dirname(s_PathToSave)): 
         raise Exception("Output directory doesn't exist")
@@ -11,37 +11,15 @@ def saveResultsYolo(dc_Results: dict, s_PathToSave: str):
         print("Wrong output file extension - changing to \'.txt\'")
         s_PathToSave = s_PathToSave.split('.')[0]+ '.txt'
     
-    l_Lines = []
-
-    if dc_Results['task'] == 'detect':
-        for i,(a_Bbox, i_ClassID) in enumerate(zip(dc_Results['bbox'],dc_Results['class'])):
-            a_Bbox = convertXYXYToXYWH(convertAbsToRel(a_Bbox, dc_Results['img_shape']))
-
-            s_Line = f"{int(i_ClassID)} {a_Bbox[0]:.5f} {a_Bbox[1]:.5f} {a_Bbox[2]:.5f} {a_Bbox[3]:.5f}"
-
-            if i!=0:
-                l_Lines.append(f"\n{s_Line}")
-            else:
-                l_Lines.append(s_Line)
-
-    else:
-        for i,(a_Polygon, i_ClassID) in enumerate(zip(dc_Results['polygon'],dc_Results['class'])):
-            s_Line = f"{int(i_ClassID)}"
-            for pt in a_Polygon:
-                s_Line += f" {float(pt[0]):.5f} {float(pt[1]):.5f}"
-
-            if i!=0:
-                l_Lines.append(f"\n{s_Line}")
-            else:
-                l_Lines.append(s_Line)
-
+    l_Lines = c_ImageResults.get_yolo_detection()
+    
     with open(s_PathToSave, 'w') as _File:
-        _File.writelines(l_Lines)
-        _File.close()
+        for _Line in l_Lines:
+            _File.write(_Line+'\n')
 
     print(f"Results saved to {s_PathToSave}")
 
-def saveResultsCoco(dc_Results: dict, s_PathToSave: str, i_ImageID: int = 0):
+def saveResultsCoco(c_ImageResults: ImageResults, s_PathToSave: str):
     s_PathToSave = s_PathToSave.lower()
     if not os.path.exists(os.path.dirname(s_PathToSave)): 
         raise Exception("Output directory doesn't exist")
@@ -49,27 +27,7 @@ def saveResultsCoco(dc_Results: dict, s_PathToSave: str, i_ImageID: int = 0):
         print("Wrong output file extension - changing to \'.json\'")
         s_PathToSave = s_PathToSave.split('.')[0]+ '.json'
     
-    l_OutputData = []
-
-    if dc_Results['task'] == 'detect':
-        for i,(a_Bbox, i_ClassID, f_Score) in enumerate(zip(dc_Results['bbox'],dc_Results['class'],dc_Results['score'])):
-            a_Bbox = convertXYXYToXYWH(a_Bbox)
-
-            l_OutputData.append({
-                "image_id": i_ImageID,
-                "category_id": int(i_ClassID),
-                "bbox": a_Bbox.tolist(),
-                "score": float(round(f_Score,3)),
-            })
-    else:
-        for i,(a_Polygon, i_ClassID, f_Score) in enumerate(zip(dc_Results['polygon'],dc_Results['class'],dc_Results['score'])):
-
-            l_OutputData.append({
-                "image_id": i_ImageID,
-                "category_id": int(i_ClassID),
-                "segmentation": a_Polygon.tolist(),
-                "score": float(round(f_Score,3)),
-            })
+    l_OutputData = c_ImageResults.get_coco_detection()
     
     with open(s_PathToSave, 'w') as _File:
         json.dump(l_OutputData, _File, indent=4)

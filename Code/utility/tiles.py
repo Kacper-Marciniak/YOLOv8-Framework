@@ -1,5 +1,5 @@
 import numpy as np
-
+from ml_model.CResults import ImageResults, Prediction
 
 def makeTiles(a_Img: np.ndarray, i_TargetTileSize=600, f_Overlap=0.2):
         """
@@ -32,45 +32,22 @@ def makeTiles(a_Img: np.ndarray, i_TargetTileSize=600, f_Overlap=0.2):
 
         return l_Coordinates
 
-def resultStiching(l_Results: list[dict], l_Coords: list):
+def resultStiching(l_Results: list[list[Prediction]], l_Coords: list) -> list[Prediction]:
     """
     Stiching results from tiled image
     """
-    if len(l_Results) == 0:
+    if len(l_Results) == 1:
         return l_Results[0]
         
     else:
-        dc_Results = {
-            "bbox": [],
-            "polygon": [],
-            "score": [],
-            "class": [],
-            "inference_time": [],
-        }
-        for dc_TileResults, [[x1,y1],[x2,y2]] in zip(l_Results, l_Coords):
-            if len(dc_TileResults["class"]):
-
-                dc_TileResults["bbox"][:,0] += x1
-                dc_TileResults["bbox"][:,2] += x1
-                dc_TileResults["bbox"][:,1] += y1
-                dc_TileResults["bbox"][:,3] += y1
-                for i,_ in enumerate(dc_TileResults["polygon"]):
-                    if not len(dc_TileResults["polygon"][i]): continue
-                    dc_TileResults["polygon"][i][:,0] += x1
-                    dc_TileResults["polygon"][i][:,1] += y1
-
-                dc_Results["bbox"] += (dc_TileResults["bbox"]).tolist()            
-                dc_Results["polygon"] += dc_TileResults["polygon"]
-
-                dc_Results["score"] += dc_TileResults["score"].tolist()
-                dc_Results["class"] += dc_TileResults["class"].tolist()
-
-            dc_Results["inference_time"].append(dc_TileResults["inference_time"])
+        l_StitchedResults = []
+        for _TilePredictions, [[x1,y1],[x2,y2]] in zip(l_Results, l_Coords):
+            if len(_TilePredictions):
+                
+                for _Pred in _TilePredictions:
+                    _Pred.BoundingBox.offset_by(x1,y1)
+                    _Pred.Polygon.offset_by(x1,y1)
+                    l_StitchedResults.append(_Pred)
         
-
-        dc_Results["class"] = np.array(dc_Results["class"])
-        dc_Results["score"] = np.array(dc_Results["score"])
-        dc_Results["bbox"] = np.array(dc_Results["bbox"])
-        dc_Results["inference_time"] = np.nanmean(dc_Results["inference_time"])
-        return dc_Results
+        return l_StitchedResults
          

@@ -1,6 +1,6 @@
 import cv2 as cv
 import numpy as np
-from utility.BboxOperations import *
+from ml_model.CResults import ImageResults, Prediction
 
 COLOURS = [
     (0, 0, 255),        # Red
@@ -28,7 +28,7 @@ COLOURS = [
 def getColour(i_Index: int):
     return COLOURS[i_Index % len(COLOURS)]
 
-def drawResults(a_Img: np.ndarray, dc_Results: dict, _Size: tuple|int = None, b_DrawInferenceTime: bool = False):
+def drawResults(a_Img: np.ndarray, c_ImageResults: ImageResults, _Size: tuple|int = None, b_DrawInferenceTime: bool = False):
     
     # Resize input image
     if isinstance(_Size,tuple):
@@ -47,13 +47,13 @@ def drawResults(a_Img: np.ndarray, dc_Results: dict, _Size: tuple|int = None, b_
         
     
     # Draw objects
-    for i, (i_ClassID, f_Score) in enumerate(zip(dc_Results['class'], dc_Results['score'])):
+    for i, _Pred in enumerate(c_ImageResults.get_predictions()):
         
         t_Colour = getColour(i)
         
         # Draw masks for instance segmentation
-        if dc_Results['task'] == 'segment':
-            a_Polygon = dc_Results['polygon'][i].copy()
+        if _Pred.Polygon.exists():
+            a_Polygon = _Pred.get_polygon()
 
             a_Polygon[:,0], a_Polygon[:,1] = a_Polygon[:,0]*f_ResizeX, a_Polygon[:,1]*f_ResizeY
 
@@ -75,11 +75,11 @@ def drawResults(a_Img: np.ndarray, dc_Results: dict, _Size: tuple|int = None, b_
         
         # Draw BBOX
         a_TmpMask = np.zeros_like(a_OverlayMasks)
-        a_Bbox = np.round(scale(dc_Results['bbox'][i], f_ResizeX, f_ResizeY)).astype(int)
+        a_Bbox = _Pred.get_bbox().scale_by(f_ResizeX, f_ResizeY).round()
         cv.rectangle(a_TmpMask, (a_Bbox[0],a_Bbox[1]), (a_Bbox[2],a_Bbox[3]), t_Colour, 2, cv.LINE_AA) 
         
         # Put text
-        s_Text = f"{dc_Results['names'][i_ClassID]}: {f_Score:.2f}"
+        s_Text = f"{_Pred.sClass}: {_Pred.fScore:.2f}"
         f_TextScale, i_TextThickness = 0.5, 1
         (w, h), _ = cv.getTextSize(s_Text, cv.FONT_HERSHEY_DUPLEX, f_TextScale, i_TextThickness)
         h += 6
@@ -107,12 +107,12 @@ def drawResults(a_Img: np.ndarray, dc_Results: dict, _Size: tuple|int = None, b_
     a_Img[a_Indices] = np.clip(np.round(a_Img[a_Indices]*0.35+a_OverlayBboxes[a_Indices]*0.65).astype(np.uint8),0,255)
 
     if b_DrawInferenceTime:
-        cv.putText(a_Img, f"Processing time: {dc_Results['time']:.1f}", (0,a_Img.shape[0]), cv.FONT_HERSHEY_DUPLEX, 1.0, (0,0,0), 2, cv.LINE_AA)
-        cv.putText(a_Img, f"Processing time: {dc_Results['time']:.1f}", (0,a_Img.shape[0]), cv.FONT_HERSHEY_DUPLEX, 1.0, (255,255,255), 1, cv.LINE_AA)
+        cv.putText(a_Img, f"Processing time: {c_ImageResults.get_inference_time():.1f}", (0,a_Img.shape[0]), cv.FONT_HERSHEY_DUPLEX, 1.0, (0,0,0), 2, cv.LINE_AA)
+        cv.putText(a_Img, f"Processing time: {c_ImageResults.get_inference_time():.1f}", (0,a_Img.shape[0]), cv.FONT_HERSHEY_DUPLEX, 1.0, (255,255,255), 1, cv.LINE_AA)
     
     return a_Img
 
-def drawResultsSAM(a_Img: np.ndarray, dc_Results: dict, l_InputPoints: list, _Size: tuple|int = None, b_DrawInferenceTime: bool = False):
+def drawResultsSAM(a_Img: np.ndarray, c_ImageResults: ImageResults, l_InputPoints: list, _Size: tuple|int = None, b_DrawInferenceTime: bool = False):
     
     # Resize input image
     if isinstance(_Size,tuple):
@@ -130,12 +130,12 @@ def drawResultsSAM(a_Img: np.ndarray, dc_Results: dict, l_InputPoints: list, _Si
         
     
     # Draw objects
-    for i,_ in enumerate(zip(dc_Results['class'])):
+    for i,_pred in enumerate(c_ImageResults.get_predictions()):
         
         t_Colour = getColour(i)
         
         # Draw masks for instance segmentation
-        a_Polygon = dc_Results['polygon'][i].copy()
+        a_Polygon = _pred.get_polygon()
 
         a_Polygon[:,0], a_Polygon[:,1] = a_Polygon[:,0]*f_ResizeX, a_Polygon[:,1]*f_ResizeY
 
@@ -166,7 +166,7 @@ def drawResultsSAM(a_Img: np.ndarray, dc_Results: dict, l_InputPoints: list, _Si
     a_Img[a_Indices] = np.clip(np.round(a_Img[a_Indices]*0.50+a_OverlayMasks[a_Indices]*0.50).astype(np.uint8),0,255)
 
     if b_DrawInferenceTime:
-        cv.putText(a_Img, f"Processing time: {dc_Results['time']:.1f}", (0,a_Img.shape[0]), cv.FONT_HERSHEY_DUPLEX, 1.0, (0,0,0), 2, cv.LINE_AA)
-        cv.putText(a_Img, f"Processing time: {dc_Results['time']:.1f}", (0,a_Img.shape[0]), cv.FONT_HERSHEY_DUPLEX, 1.0, (255,255,255), 1, cv.LINE_AA)
+        cv.putText(a_Img, f"Processing time: {c_ImageResults.get_inference_time():.1f}", (0,a_Img.shape[0]), cv.FONT_HERSHEY_DUPLEX, 1.0, (0,0,0), 2, cv.LINE_AA)
+        cv.putText(a_Img, f"Processing time: {c_ImageResults.get_inference_time():.1f}", (0,a_Img.shape[0]), cv.FONT_HERSHEY_DUPLEX, 1.0, (255,255,255), 1, cv.LINE_AA)
     
     return a_Img

@@ -1,5 +1,5 @@
 """
-ResNet based feature extractor
+INCEPTIONv3 based feature extractor
 """
 
 import torch

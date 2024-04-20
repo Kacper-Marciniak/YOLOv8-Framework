@@ -7,6 +7,7 @@ import numpy as np
 import cv2 as cv
 from parameters.parameters import DEFAULT_MODEL_THRESH, ALLOWED_INPUT_FILES
 from ultralytics.models.sam import Predictor as SAM
+from ml_model.CResults import ImageResults, Prediction
 
 class CModelSAM():
     """
@@ -28,13 +29,12 @@ class CModelSAM():
 
         print(f'SAM successfully initialized.')
 
-    def __Inference(self, a_InputImg: np.ndarray | str, l_Points: list):
+    def __Inference(self, a_InputImg: np.ndarray | str, l_Points: list) -> list[Prediction]:
         """
         Inference
         """
-
-        l_Bboxes, l_Polygons, l_Scores, l_Classes = [], [], [], []
-        f_InferenceTime = np.nan
+        
+        l_Predictions = []
 
         try:
             self.C_SAMModel.set_image(a_InputImg)
@@ -42,27 +42,19 @@ class CModelSAM():
             _Results = self.C_SAMModel(points=l_Points)[0]
             # Format results
             for i,_Polygon in enumerate(_Results.masks.xy):
-                l_Polygons.append(np.array(np.round(_Polygon),dtype=np.int32))
-                x,y,w,h = cv.boundingRect(_Polygon)
-                l_Bboxes.append(np.array([x,y,x+w,y+h],dtype=int))
-                l_Classes.append(0)
-                l_Scores.append(-1.0)
-            f_InferenceTime = sum(list(_Results.speed.values()))
+                a_Polygon = np.array(np.round(_Polygon),dtype=np.int32)
+                x,y,w,h = cv.boundingRect(a_Polygon)
+                l_Bbox = [x,y,x+w,y+h]
+                l_Predictions.append(Prediction(self.l_ClassNames[0], 0, -1.0, l_Bbox, a_Polygon))
+
             # Reset image
             self.C_SAMModel.reset_image()
         except Exception as E:
-            print(f"Exception {E} during SAM post-processing.")
+            print(f"Exception {E} during SAM inference.")
 
+        return l_Predictions
 
-        return {
-            "bbox": np.array(l_Bboxes),
-            "polygon": l_Polygons,
-            "score": np.array(l_Scores),
-            "class": np.array(l_Classes),
-            "inference_time": f_InferenceTime,
-        }
-
-    def Detect(self, _Input: np.ndarray | str, l_Points: list, b_PrintOutput: bool = True):
+    def Detect(self, _Input: np.ndarray | str, l_Points: list, b_PrintOutput: bool = True, s_ImageID: str = None) -> ImageResults:
         """
         Perform detection on image
         """   
@@ -85,15 +77,16 @@ class CModelSAM():
 
         print(f"\n\n[SAM] image shape: {_Input.shape[1]}x{_Input.shape[0]}")
             
-        dc_Results = self.__Inference(_Input, l_Points)
+        lPredictions = self.__Inference(_Input, l_Points)
 
-        dc_Results["img_shape"] = _Input.shape
-        dc_Results["task"] = self.s_Task
-        dc_Results["names"] = self.l_ClassNames
-        dc_Results["time"] = (time.time()-f_Time)*1000.0
-
-        print(f"Inference time: {dc_Results['time']:.3f} ms.")
+        c_Results = ImageResults(
+            s_ImageID,
+            _Input.shape,
+            lPredictions,
+            (time.time() - f_Time) * 1000.0
+        )
+        print(f"Inference time: {c_Results.get_inference_time():.3f} ms.")
 
         sys.stdout = sys.__stdout__
         
-        return dc_Results
+        return c_Results

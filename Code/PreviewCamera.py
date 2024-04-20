@@ -32,10 +32,10 @@ if __name__ == "__main__":
         a_Img = CCamera.grabFrame()
 
         # Inference - object detection
-        dc_Results = c_Model.Detect(a_Img)
+        c_ImageResults = c_Model.Detect(a_Img)
 
         # Visualize results with opencv GUI
-        a_Preview = drawResults(a_Img.copy(), dc_Results, _Size=1000, b_DrawInferenceTime=True)
+        a_Preview = drawResults(a_Img.copy(), c_ImageResults, _Size=1000, b_DrawInferenceTime=True)
         cv.imshow("Camera", a_Preview)
         
         f_Time = (time.time() - f_Time)*1000.0
