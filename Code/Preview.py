@@ -1,5 +1,5 @@
 """
-Preview inference and save output in YOLO and COCO format
+Preview inference and save output in YOLO and COCO format. Use your custom model (located in /models) and images from a chosen folder.
 """
 
 import os
@@ -37,23 +37,23 @@ if __name__ == "__main__":
         a_Img = cv.imread(os.path.join(s_PathImages,s_FileName))
 
         # Inference - object detection
-        dc_Results = c_Model.Detect(a_Img)
+        c_ImageResults = c_Model.Detect(a_Img, s_ImageID=str(i))
 
         # Visualize results with opencv GUI
-        a_Preview = drawResults(a_Img.copy(), dc_Results, _Size=1000)
+        a_Preview = drawResults(a_Img.copy(), c_ImageResults, _Size=1000)
         cv.imshow(os.path.basename(s_FileName), a_Preview)
         iKey = cv.waitKey(0)
         cv.destroyAllWindows()
 
         # Save output as YOLO .txt file
-        saveResultsYolo(dc_Results, os.path.join(s_OutputPath, s_FileName.split('.')[0]+'.txt'))
+        saveResultsYolo(c_ImageResults, os.path.join(s_OutputPath, s_FileName.split('.')[0]+'.txt'))
         # Save output as COCO .json file
-        saveResultsCoco(dc_Results, os.path.join(s_OutputPath, s_FileName.split('.')[0]+'.json'), i_ImageID = i)
+        saveResultsCoco(c_ImageResults, os.path.join(s_OutputPath, s_FileName.split('.')[0]+'.json'))
 
         if iKey == 27: 
-            # Exit
+            # Press 'ESC' to exit
             break
         elif iKey == 115: 
-            # Save preview
+            # Press 's' to save preview image
             cv.imwrite(os.path.join(s_OutputPath, s_FileName.split('.')[0]+'.jpg'), a_Preview)
             print("Preview image saved.")

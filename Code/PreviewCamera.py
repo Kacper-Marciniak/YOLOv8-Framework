@@ -1,5 +1,5 @@
 """
-Preview inference from camera
+Preview inference from camera and segment objects using YOLOv8n-seg model
 """
 
 import cv2 as cv
@@ -16,7 +16,8 @@ f_Thresh = 0.50
 
 if __name__ == "__main__":
     # Initialize camera
-    CCamera = Camera()    
+    CCamera = Camera()
+    CCamera.setResolution(1280,720)
 
     # Initialize model
     c_Model = Model(
@@ -32,19 +33,16 @@ if __name__ == "__main__":
         a_Img = CCamera.grabFrame()
 
         # Inference - object detection
-        dc_Results = c_Model.Detect(a_Img)
+        c_ImageResults = c_Model.Detect(a_Img)
 
         # Visualize results with opencv GUI
-        a_Preview = drawResults(a_Img.copy(), dc_Results, _Size=1000, b_DrawInferenceTime=True)
+        a_Preview = drawResults(a_Img.copy(), c_ImageResults, _Size=1000, b_DrawInferenceTime=True)
         cv.imshow("Camera", a_Preview)
-        
-        f_Time = (time.time() - f_Time)*1000.0
-        f_Time = max(1,int(1000.0/i_TargetFPS-f_Time))
-        
-        cv.waitKey(f_Time)
+                
+        sKey = cv.waitKey(max(1,int(1000.0/i_TargetFPS-((time.time() - f_Time)*1000.0))))
 
-        # Break from loop when OpenCV window is closed
-        if not cv.getWindowProperty("Camera", cv.WND_PROP_VISIBLE): break
+        # Break from loop when OpenCV window is closed or ESC is pressed
+        if not cv.getWindowProperty("Camera", cv.WND_PROP_VISIBLE) or sKey == 27: break
     
     try: 
         CCamera.close()

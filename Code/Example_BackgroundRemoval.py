@@ -10,7 +10,7 @@ from camera.CCamera import CCamera as Camera
 import numpy as np
 
 # Target FPS
-i_TargetFPS = 30
+i_TargetFPS = 10
 # Confidence threshold value
 f_Thresh = 0.50
 
@@ -20,7 +20,7 @@ if __name__ == "__main__":
 
     # Initialize model
     c_Model = Model(
-        s_PathWeights = 'yolov8l-seg.pt', # YOLOv8-Large detection model trained on COCO dataset
+        s_PathWeights = 'yolov8n-seg.pt', # YOLOv8-Nano detection model trained on COCO dataset
         f_Thresh = f_Thresh, # Confidence threshold value
     )
 
@@ -31,10 +31,12 @@ if __name__ == "__main__":
         a_Img = CCamera.grabFrame()
 
         # Inference - object detection
-        dc_Results = c_Model.Detect(a_Img, b_PrintOutput = False)
+        c_Results = c_Model.Detect(a_Img, b_PrintOutput = False)
+
+        c_Results.get_predictions_by_class("person")
 
         # Get all instances of 'person' class
-        l_PersonContours = [a_Cnt for a_Cnt, i_ClassID in zip(dc_Results['polygon'],dc_Results['class']) if i_ClassID==0]
+        l_PersonContours = [_pred.get_polygon().round().get_array() for _pred in c_Results.get_predictions_by_class("person")]
 
         # Create mask
         a_Mask = np.zeros((a_Img.shape[0],a_Img.shape[1],1))
@@ -54,15 +56,11 @@ if __name__ == "__main__":
         a_Img = np.clip(a_ImgBlur*a_Mask+a_Img*(1.0-a_Mask), 0, 255).astype(np.uint8)
 
         # Display frame
-        cv.imshow("Camera", a_Img)        
+        cv.imshow("Camera", a_Img)
+        sKey = cv.waitKey(max(1,int(1000.0/i_TargetFPS-((time.time() - f_Time)*1000.0))))
 
-        f_Time = (time.time() - f_Time)*1000.0
-        f_Time = max(1,int(1000.0/i_TargetFPS-f_Time))
-        
-        cv.waitKey(f_Time)
-
-        # Break from loop when openCV window is closed
-        if not cv.getWindowProperty("Camera", cv.WND_PROP_VISIBLE): break
+        # Break from loop when openCV window is closed or ESC is pressed
+        if not cv.getWindowProperty("Camera", cv.WND_PROP_VISIBLE) or sKey==27: break
     
     try: 
         CCamera.close()

@@ -108,16 +108,7 @@ results = c_Model.Detect(image)
 results = c_Model.Detect('example_path\\example_image.jpg')
 ```
 
-Model class returns results in a form of dictionary with following keys:
-- ```bbox```: Array of bounding boxes [ndarray]
-- ```polygon```: List of polygons (for segmentation task) [list of ndarrays]
-- ```score```: Array of confidence scores [ndarray]
-- ```class```: Array of class IDs [ndarray]
-- ```img_shape```: Input image shape (W,H,C) [tuple]
-- ```task```: Model task type ('segment' or 'detect') [string]
-- ```names```: List of class names [list]
-- ```time```: Full processing time in ms [float]
-- ```"inference_time"```: Inference time in ms [float]
+Model class returns results in a form of ImageResults class, which can be seen [here](Code/ml_model/CResults.py).
 
 When detecting or segmenting small objects in large images, tiling can be useful - it divides the input image into several smaller tiles, which are passed to the ML model. The results are merged and presented for the full resolution image.
 

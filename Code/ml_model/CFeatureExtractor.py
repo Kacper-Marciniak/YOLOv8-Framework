@@ -1,10 +1,9 @@
 """
-ResNet based feature extractor
+INCEPTIONv3 based feature extractor
 """
 
 import torch
 import numpy as np
-import os
 import cv2 as cv
 from torchvision.models import inception_v3
 import torchvision.transforms as transforms
