@@ -1,7 +1,7 @@
 import os
 import json
 
-from ml_model.CResults import ImageResults, Prediction
+from ml_model.CResults import ImageResults
 
 def saveResultsYolo(c_ImageResults: ImageResults, s_PathToSave: str):
     s_PathToSave = s_PathToSave.lower()

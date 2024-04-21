@@ -16,8 +16,8 @@ class CModelML():
     """
     YOLOv8 object detection model
     * s_PathWeights: str - path to weights file or name of official YOLOv8 model
-    * f_Thresh: float = DEFAULT_MODEL_THRESH - confidence score threshold
-    * s_ForceDevice: str = '' - force device (f.e. 'cpu', 'cuda:0')
+    * f_Thresh: float - confidence score threshold
+    * s_ForceDevice: str - force device (f.e. 'cpu', 'cuda:0')
     * b_SAMPostProcess: bool - enable post-processing using Segment Anything Model (SAM)
     * i_TileSize: int - tile size
     """
@@ -111,7 +111,7 @@ class CModelML():
 
     def Detect(self, _Input: np.ndarray | str, b_PrintOutput: bool = True, s_ImageID: str = None) -> ImageResults:
         """
-        Perform detection on image
+        Perform detection/segmentation on image
         """   
         f_Time = time.time()
 
@@ -138,10 +138,8 @@ class CModelML():
         else:
             lCoords = [[[0,0],[_Input.shape[1],_Input.shape[0]]]]
 
-        l_Results = []
         # Inference
-        for [[x1,y1],[x2,y2]] in lCoords:
-            l_Results.append(self.__Inference(_Input[y1:y2,x1:x2]))
+        l_Results = [self.__Inference(_Input[y1:y2,x1:x2]) for [[x1,y1],[x2,y2]] in lCoords]
 
         # Tile stiching
         l_Results = resultStiching(l_Results, lCoords)
@@ -167,7 +165,9 @@ class CModelML():
 
     def PostProcess(self, a_Img: np.ndarray, c_ImageResults: ImageResults) -> list[Prediction]:
         try:
+            # Set image
             self.C_SAMModel.set_image(a_Img)  # set with np.ndarray
+            
             for i,_Pred in c_ImageResults.get_predictions():
                 _Results = self.C_SAMModel(bboxes=_Pred.get_bbox().round().get_xyxy())[0]
                 # Format results
@@ -180,6 +180,7 @@ class CModelML():
 
             # Reset image
             self.C_SAMModel.reset_image()
+        
         except Exception as E:
             print(f"Exception {E} during SAM post-processing.")
         

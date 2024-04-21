@@ -1,13 +1,11 @@
 """
-Preview inference from camera
+Use this script to run the SAM model on a camera feed and segment objects by drawing bounding boxes on the screen.
 """
 
 import cv2 as cv
-import time
-import numpy as np
 
 from ml_model.CModelSAM import CModelSAM as ModelSAM
-from results.visualization import drawResultsSAM
+from results.visualization import drawResults
 from camera.CCamera import CCamera as Camera
 
 # Target FPS value
@@ -64,7 +62,7 @@ if __name__ == "__main__":
         c_ImageResults = c_Model.Segment(a_Img, l_Bbox=global_bbox, b_PrintOutput=False)
 
         # Visualize results with opencv GUI
-        a_Preview = drawResultsSAM(a_Img.copy(), c_ImageResults, global_bbox)
+        a_Preview = drawResults(a_Img.copy(), c_ImageResults)
         
         cv.imshow("Camera", a_Preview)        
         sKey = cv.waitKey(0)

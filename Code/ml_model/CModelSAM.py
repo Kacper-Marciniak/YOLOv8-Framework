@@ -12,7 +12,7 @@ from ml_model.CResults import ImageResults, Prediction
 class CModelSAM():
     """
     SAM segmentation
-    * f_Thresh: float = DEFAULT_MODEL_THRESH - confidence score threshold
+    * f_Thresh: float - confidence score threshold
     """
     def __init__(
             self, 

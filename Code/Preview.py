@@ -1,5 +1,5 @@
 """
-Preview inference and save output in YOLO and COCO format
+Preview inference and save output in YOLO and COCO format. Use your custom model (located in /models) and images from a chosen folder.
 """
 
 import os
@@ -51,9 +51,9 @@ if __name__ == "__main__":
         saveResultsCoco(c_ImageResults, os.path.join(s_OutputPath, s_FileName.split('.')[0]+'.json'))
 
         if iKey == 27: 
-            # Exit
+            # Press 'ESC' to exit
             break
         elif iKey == 115: 
-            # Save preview
+            # Press 's' to save preview image
             cv.imwrite(os.path.join(s_OutputPath, s_FileName.split('.')[0]+'.jpg'), a_Preview)
             print("Preview image saved.")

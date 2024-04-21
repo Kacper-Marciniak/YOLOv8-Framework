@@ -86,7 +86,9 @@ class Bbox():
 class Polygon():
     
     def __init__(self, aPolygon: np.ndarray):
-        self.aPolygon = aPolygon
+        if len(aPolygon.shape) == 2:
+            aPolygon = aPolygon.reshape(-1,1,2)
+        self.aPolygon = aPolygon.astype(float)
 
     def exists(self):
         return len(self.aPolygon)>0
@@ -291,7 +293,7 @@ class ImageResults():
     def list_results(self):
         print(f"Image \'{self.sImageID}\' - {self.get_n_predictions()} detections.")
         for i, pred in enumerate(self.get_predictions()):
-            print(f"\t{i+1}) {pred.sClass} with score {pred.fScore}")
+            print(f"\t{i+1}) {pred.sClass} with score {pred.fScore:.2f}")
     
     def to_dict(self):
         return {

@@ -2,7 +2,6 @@
 Functions used in dataset creation
 """
 
-import cv2 as cv
 from tqdm import tqdm
 import numpy as np
 import os, shutil, time

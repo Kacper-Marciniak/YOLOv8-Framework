@@ -47,6 +47,8 @@ class CCamera:
         """
         Start camera loop
         """
+        self.b_Run = True
+        self.b_IsFrame, self.a_Frame = False, None
         self._CameraThread = self.__run()
         self.__waitCameraStart() # Wait for camera to start
         print(f"Camera {self.i_DeviceName} is on!")
@@ -63,8 +65,6 @@ class CCamera:
 
     @threaded
     def __run(self):
-        self.b_Run = True
-        self.b_IsFrame, self.a_Frame = False, None
         while self.b_Run and self.CCamera.isOpened():
             try:
                 b_Ret, a_Output = self.CCamera.read()

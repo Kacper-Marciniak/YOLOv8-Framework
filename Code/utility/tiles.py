@@ -1,9 +1,12 @@
 import numpy as np
-from ml_model.CResults import ImageResults, Prediction
+from ml_model.CResults import Prediction
 
 def makeTiles(a_Img: np.ndarray, i_TargetTileSize=600, f_Overlap=0.2):
         """
-        Image tiling
+        Split image into tiles.
+        * a_Img: Image to split
+        * i_TargetTileSize: Size of each tile (square)
+        * f_Overlap: Overlap between tiles relative to tile size (0.0-1.0)
         """
         # Get distance between tiles
         f_TileDistance = round(i_TargetTileSize * (1-f_Overlap))
@@ -42,8 +45,7 @@ def resultStiching(l_Results: list[list[Prediction]], l_Coords: list) -> list[Pr
     else:
         l_StitchedResults = []
         for _TilePredictions, [[x1,y1],[x2,y2]] in zip(l_Results, l_Coords):
-            if len(_TilePredictions):
-                
+            if len(_TilePredictions):                
                 for _Pred in _TilePredictions:
                     _Pred.BoundingBox.offset_by(x1,y1)
                     _Pred.Polygon.offset_by(x1,y1)

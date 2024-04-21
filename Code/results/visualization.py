@@ -1,6 +1,6 @@
 import cv2 as cv
 import numpy as np
-from ml_model.CResults import ImageResults, Prediction
+from ml_model.CResults import ImageResults
 
 COLOURS = [
     (0, 0, 255),        # Red
@@ -38,8 +38,8 @@ def drawResults(a_Img: np.ndarray, c_ImageResults: ImageResults, _Size: tuple|in
         f_ResizeX = _Size / max(a_Img.shape[:2])
         f_ResizeY = f_ResizeX
     else:
-        f_ResizeX = 1
-        f_ResizeY = 1
+        f_ResizeX = 1.0
+        f_ResizeY = 1.0
 
     a_Img = cv.resize(a_Img, (int(f_ResizeX*a_Img.shape[1]), int(f_ResizeY*a_Img.shape[0])))
     a_OverlayBboxes = np.zeros_like(a_Img)
@@ -53,30 +53,13 @@ def drawResults(a_Img: np.ndarray, c_ImageResults: ImageResults, _Size: tuple|in
         
         # Draw masks for instance segmentation
         if _Pred.Polygon.exists():
-            a_Polygon = _Pred.get_polygon().get_array()
-
-            a_Polygon[:,0], a_Polygon[:,1] = a_Polygon[:,0]*f_ResizeX, a_Polygon[:,1]*f_ResizeY
-
-            a_Mask = cv.drawContours(np.zeros((a_OverlayMasks.shape[0],a_OverlayMasks.shape[1],1),dtype=np.uint8), [a_Polygon], 0, 255, -1, cv.LINE_AA)
-            a_TmpMask = np.zeros_like(a_OverlayMasks)
-            a_TmpMask[a_Mask[:,:,0]>0] = t_Colour
-            
-            a_Indices1, a_Indices2 = np.sum(a_OverlayMasks,2)>0, np.sum(a_TmpMask,2)>0
-            a_Indices = np.logical_and(a_Indices1,a_Indices2)
-            a_OverlayMasks[a_Indices] = np.clip(np.round(a_TmpMask[a_Indices]*0.50+a_OverlayMasks[a_Indices]*0.50).astype(np.uint8),0,255)
-            a_Indices = np.logical_and(np.logical_not(a_Indices1),a_Indices2)
-            a_OverlayMasks[a_Indices] = a_TmpMask[a_Indices]
-            
-            del(a_Indices1)
-            del(a_Indices2)
-            del(a_Indices)
-            del(a_TmpMask)
+            a_Polygon = _Pred.get_polygon().scale_by(f_ResizeX,f_ResizeY).round().get_array()
+            a_OverlayMasks = cv.drawContours(a_OverlayMasks, [a_Polygon], 0, t_Colour, -1, cv.LINE_AA)
 
         
         # Draw BBOX
-        a_TmpMask = np.zeros_like(a_OverlayMasks)
         a_Bbox = _Pred.get_bbox().scale_by(f_ResizeX, f_ResizeY).round().get_xyxy()
-        cv.rectangle(a_TmpMask, (a_Bbox[0],a_Bbox[1]), (a_Bbox[2],a_Bbox[3]), t_Colour, 2, cv.LINE_AA) 
+        cv.rectangle(a_OverlayBboxes, (a_Bbox[0],a_Bbox[1]), (a_Bbox[2],a_Bbox[3]), t_Colour, 2, cv.LINE_AA) 
         
         # Put text
         s_Text = f"{_Pred.sClass}: {_Pred.fScore:.2f}"
@@ -84,83 +67,19 @@ def drawResults(a_Img: np.ndarray, c_ImageResults: ImageResults, _Size: tuple|in
         (w, h), _ = cv.getTextSize(s_Text, cv.FONT_HERSHEY_DUPLEX, f_TextScale, i_TextThickness)
         h += 6
         w += 4        
-        cv.rectangle(a_TmpMask, (a_Bbox[0],a_Bbox[1]), (a_Bbox[0]+w,a_Bbox[1]+h), t_Colour, -1)
-        cv.putText(a_TmpMask, s_Text, (a_Bbox[0]+2,a_Bbox[1]+h-3), cv.FONT_HERSHEY_DUPLEX, f_TextScale, (1,1,1), i_TextThickness*2, cv.LINE_AA)
-        cv.putText(a_TmpMask, s_Text, (a_Bbox[0]+2,a_Bbox[1]+h-3), cv.FONT_HERSHEY_DUPLEX, f_TextScale, (255,255,255), i_TextThickness, cv.LINE_AA)
-
-        a_Indices1, a_Indices2 = np.sum(a_OverlayBboxes,2)>0, np.sum(a_TmpMask,2)>0
-        a_Indices = np.logical_and(a_Indices1,a_Indices2)
-        a_OverlayBboxes[a_Indices] = np.clip(np.round(a_TmpMask[a_Indices]*0.50+a_OverlayBboxes[a_Indices]*0.50).astype(np.uint8),0,255)
-        a_Indices = np.logical_and(np.logical_not(a_Indices1),a_Indices2)
-        a_OverlayBboxes[a_Indices] = a_TmpMask[a_Indices]
-            
-        del(a_Indices1)
-        del(a_Indices2)
-        del(a_Indices)
-        del(a_TmpMask)
+        cv.rectangle(a_OverlayBboxes, (a_Bbox[0],a_Bbox[1]), (a_Bbox[0]+w,a_Bbox[1]+h), t_Colour, -1)
+        cv.putText(a_OverlayBboxes, s_Text, (a_Bbox[0]+2,a_Bbox[1]+h-3), cv.FONT_HERSHEY_DUPLEX, f_TextScale, (0,0,0), i_TextThickness*2, cv.LINE_AA)
+        cv.putText(a_OverlayBboxes, s_Text, (a_Bbox[0]+2,a_Bbox[1]+h-3), cv.FONT_HERSHEY_DUPLEX, f_TextScale, (255,255,255), i_TextThickness, cv.LINE_AA)
 
     # Create final preview image
-    a_Indices = np.sum(a_OverlayMasks,axis=2)>0  
-    a_Img[a_Indices] = np.clip(np.round(a_Img[a_Indices]*0.50+a_OverlayMasks[a_Indices]*0.50).astype(np.uint8),0,255)
+    a_Overlay = cv.addWeighted(a_OverlayMasks, 1, a_OverlayBboxes, 1, 0)
+    del a_OverlayMasks, a_OverlayBboxes
 
-    a_Indices = np.sum(a_OverlayBboxes,axis=2)>0  
-    a_Img[a_Indices] = np.clip(np.round(a_Img[a_Indices]*0.35+a_OverlayBboxes[a_Indices]*0.65).astype(np.uint8),0,255)
-
-    if b_DrawInferenceTime:
-        cv.putText(a_Img, f"Processing time: {c_ImageResults.get_inference_time():.1f}", (0,a_Img.shape[0]), cv.FONT_HERSHEY_DUPLEX, 1.0, (0,0,0), 2, cv.LINE_AA)
-        cv.putText(a_Img, f"Processing time: {c_ImageResults.get_inference_time():.1f}", (0,a_Img.shape[0]), cv.FONT_HERSHEY_DUPLEX, 1.0, (255,255,255), 1, cv.LINE_AA)
-    
-    return a_Img
-
-def drawResultsSAM(a_Img: np.ndarray, c_ImageResults: ImageResults, l_InputBBOX: list, _Size: tuple|int = None, b_DrawInferenceTime: bool = False):
-    
-    # Resize input image
-    if isinstance(_Size,tuple):
-        f_ResizeX = _Size[0] / a_Img.shape[1]
-        f_ResizeY = _Size[1] / a_Img.shape[0]
-    elif isinstance(_Size,int):
-        f_ResizeX = _Size / max(a_Img.shape[:2])
-        f_ResizeY = f_ResizeX
-    else:
-        f_ResizeX = 1
-        f_ResizeY = 1
-
-    a_Img = cv.resize(a_Img, (int(f_ResizeX*a_Img.shape[1]), int(f_ResizeY*a_Img.shape[0])))
-    a_OverlayMasks = np.zeros_like(a_Img)
-        
-    
-    # Draw objects
-    for i,_pred in enumerate(c_ImageResults.get_predictions()):
-        
-        t_Colour = getColour(i)
-        
-        # Draw masks for instance segmentation
-        a_Polygon = _pred.get_polygon().get_array()
-
-        a_Polygon[:,0], a_Polygon[:,1] = a_Polygon[:,0]*f_ResizeX, a_Polygon[:,1]*f_ResizeY
-
-        a_Mask = cv.drawContours(np.zeros((a_OverlayMasks.shape[0],a_OverlayMasks.shape[1],1),dtype=np.uint8), [a_Polygon], 0, 255, -1, cv.LINE_AA)
-        a_TmpMask = np.zeros_like(a_OverlayMasks)
-        a_TmpMask[a_Mask[:,:,0]>0] = t_Colour
-            
-        a_Indices1, a_Indices2 = np.sum(a_OverlayMasks,2)>0, np.sum(a_TmpMask,2)>0
-        a_Indices = np.logical_and(a_Indices1,a_Indices2)
-        a_OverlayMasks[a_Indices] = np.clip(np.round(a_TmpMask[a_Indices]*0.50+a_OverlayMasks[a_Indices]*0.50).astype(np.uint8),0,255)
-        a_Indices = np.logical_and(np.logical_not(a_Indices1),a_Indices2)
-        a_OverlayMasks[a_Indices] = a_TmpMask[a_Indices]
-            
-        del(a_Indices1)
-        del(a_Indices2)
-        del(a_Indices)
-        del(a_TmpMask)
-
-    # Draw rectangle
-
-    cv.rectangle(a_Img, (l_InputBBOX[0],l_InputBBOX[1]), (l_InputBBOX[2],l_InputBBOX[3]), (0,255,0), 3)
-
-    # Create final preview image
-    a_Indices = np.sum(a_OverlayMasks,axis=2)>0  
-    a_Img[a_Indices] = np.clip(np.round(a_Img[a_Indices]*0.50+a_OverlayMasks[a_Indices]*0.50).astype(np.uint8),0,255)
+    a_Img = cv.addWeighted(
+        a_Img, 1,
+        a_Overlay, .5, 
+        0
+    )    
 
     if b_DrawInferenceTime:
         cv.putText(a_Img, f"Processing time: {c_ImageResults.get_inference_time():.1f}", (0,a_Img.shape[0]), cv.FONT_HERSHEY_DUPLEX, 1.0, (0,0,0), 2, cv.LINE_AA)
