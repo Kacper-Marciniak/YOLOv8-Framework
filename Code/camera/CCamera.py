@@ -89,17 +89,12 @@ class CCamera:
         self.CCamera.release()
         print(f"Camera {self.i_DeviceName} was closed!")
 
-
-
     def grabFrame(self):
         """
         Grab new frame from webcam
         """
-        b_Res, a_Output = self.CCamera.read()
-        if b_Res:
-            return np.array(a_Output, dtype=np.uint8)
-        else: 
-            return np.zeros(self.t_Shape, dtype=np.uint8)
+        if self.b_IsFrame: return self.a_Frame
+        else: return None
 
     def displayInLoop(self, s_BreakKey: str ='q', i_TargetFps: int = 60):
         """
