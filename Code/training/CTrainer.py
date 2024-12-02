@@ -86,47 +86,23 @@ class CTrainer():
         """
         print("Starting training task...")
 
+        kwargs = {
+            "data":              os.path.join(self.s_DatasetDirectory, 'data.yaml') if not 'classify'==self.c_Model.task else self.s_DatasetDirectory,
+            "batch":             i_BatchSize,
+            "epochs":            max(1,i_Epochs), 
+            "imgsz":             TRAINING_PARAMETERS["imgsz"],
+            "workers":           0,
+            "project":           os.path.dirname(self.s_TrainingOutputPath),
+            "name":              os.path.basename(self.s_TrainingOutputPath),
+            "exist_ok":          True,
+            "cache":             'ram',
+            "plots":             True,
+            "patience":          50,
+            "close_mosaic":      25,
+        }
+
         self.c_Model.train(
-            data =              os.path.join(self.s_DatasetDirectory, 'data.yaml') if not 'classify'==self.c_Model.task else self.s_DatasetDirectory,
-            batch =             i_BatchSize,
-            epochs =            max(1,i_Epochs), 
-            imgsz =             TRAINING_PARAMETERS["imgsz"],
-            workers =           0,
-            project =           os.path.dirname(self.s_TrainingOutputPath),
-            name =              os.path.basename(self.s_TrainingOutputPath),
-            exist_ok =          True,
-            cache =             'ram',
-            plots =             True,
-            patience =          25,
-            close_mosaic =      5,
-            # AUGMENTATION
-            hsv_h =             TRAINING_PARAMETERS["hsv_h"],  # image HSV-Hue augmentation (fraction)
-            hsv_s =             TRAINING_PARAMETERS["hsv_s"],    # image HSV-Saturation augmentation (fraction)
-            hsv_v =             TRAINING_PARAMETERS["hsv_v"],    # image HSV-Value augmentation (fraction)
-            degrees =           TRAINING_PARAMETERS["degrees"],    # image rotation (+/- deg)
-            translate =         TRAINING_PARAMETERS["translate"],    # image translation (+/- fraction)
-            scale =             TRAINING_PARAMETERS["scale"],    # image scale (+/- gain)
-            shear =             TRAINING_PARAMETERS["shear"],    # image shear (+/- deg)
-            perspective =       TRAINING_PARAMETERS["perspective"],    # image perspective (+/- fraction), range 0-0.001
-            flipud =            TRAINING_PARAMETERS["flipud"],    # image flip up-down (probability)
-            fliplr =            TRAINING_PARAMETERS["fliplr"],    # image flip left-right (probability)
-            mosaic =            TRAINING_PARAMETERS["mosaic"],    # image mosaic (probability)
-            mixup =             TRAINING_PARAMETERS["mixup"],    # image mixup (probability)
-            copy_paste =        TRAINING_PARAMETERS["copy_paste"],    # segment copy-paste (probability)
-            erasing =             TRAINING_PARAMETERS["erasing"],    # random erase (probability)  
-            # LEARNING RATE
-            lr0 =               TRAINING_PARAMETERS["lr0"],   # initial learning rate (SGD=1E-2, Adam=1E-3)
-            lrf =               TRAINING_PARAMETERS["lrf"],   # final OneCycleLR learning rate (lr0 * lrf)
-            # MOMENTUM
-            momentum =          TRAINING_PARAMETERS["momentum"],  # SGD momentum/Adam beta1
-            # DECAY
-            weight_decay =      TRAINING_PARAMETERS["weight_decay"], # optimizer weight decay 5e-4
-            # WARMUP
-            warmup_epochs =     TRAINING_PARAMETERS["warmup_epochs"],    # warmup epochs (fractions ok)
-            warmup_momentum =   TRAINING_PARAMETERS["warmup_momentum"],    # warmup initial momentum
-            warmup_bias_lr =    TRAINING_PARAMETERS["warmup_bias_lr"],    # warmup initial bias lr
-            box =               TRAINING_PARAMETERS["box"],     # box loss gain
-            cls =               TRAINING_PARAMETERS["cls"],    # cls loss gain
+            **(kwargs | TRAINING_PARAMETERS)
         )
 
     def TestInference(self, f_ConfThresh: float = 0.5):
