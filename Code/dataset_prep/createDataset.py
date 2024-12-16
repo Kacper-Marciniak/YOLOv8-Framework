@@ -6,6 +6,7 @@ from tqdm import tqdm
 import numpy as np
 import os, shutil, time
 import yaml
+import random
 
 from parameters.parameters import *
 
@@ -16,7 +17,9 @@ def _splitData(s_InputDir: str, s_OutputDir: str, _Seed = None) -> None:
     Split data into 'train', 'val' and 'test' subsets
     """
 
-    if _Seed != None: np.random.seed(_Seed)
+    if _Seed != None: 
+        np.random.seed(_Seed)
+        random.seed = _Seed
 
     l_ListLabels = [s_FileName.lower().split('.')[0] for s_FileName in os.listdir(s_InputDir)
                     if s_FileName.lower().split('.')[-1] == 'txt']
@@ -26,6 +29,8 @@ def _splitData(s_InputDir: str, s_OutputDir: str, _Seed = None) -> None:
                     and s_FileName.lower().split('.')[0] in l_ListLabels]
 
     del(l_ListLabels)
+
+    random.shuffle(l_ListImages)
 
     l_ImagesTest = l_ListImages[:round(len(l_ListImages)*SPLIT_TEST)]
     l_ImagesVal = l_ListImages[round(len(l_ListImages)*SPLIT_TEST):round(len(l_ListImages)*SPLIT_TEST)+round(len(l_ListImages)*SPLIT_VAL)]
@@ -102,7 +107,9 @@ def prepareCrossEvalData(s_InputDir: str, s_OutputDir: str, iNSegments: int, _Se
 
     s_OutputDir = os.path.abspath(s_OutputDir).replace('\\','/').replace('//','/')
 
-    if _Seed != None: np.random.seed(_Seed)
+    if _Seed != None: 
+        np.random.seed(_Seed)
+        random.seed = _Seed
 
     l_ListLabels = [s_FileName.lower().split('.')[0] for s_FileName in os.listdir(s_InputDir)
                     if s_FileName.lower().split('.')[-1] == 'txt']
@@ -112,6 +119,8 @@ def prepareCrossEvalData(s_InputDir: str, s_OutputDir: str, iNSegments: int, _Se
                     and s_FileName.lower().split('.')[0] in l_ListLabels]
 
     del(l_ListLabels)
+
+    random.shuffle(l_ListImages)
 
     print(f"Splitting data into {iNSegments} segments.")
 
