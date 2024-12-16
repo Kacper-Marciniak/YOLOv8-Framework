@@ -18,6 +18,16 @@ AVAILABLE_MODELS = [
     "yolov8m-cls",
     "yolov8l-cls",
     "yolov8x-cls",
+    "yolo11n",
+    "yolo11s",
+    "yolo11m",
+    "yolo11l",
+    "yolo11x",
+    "yolo11n-seg",
+    "yolo11s-seg",
+    "yolo11m-seg",
+    "yolo11l-seg",
+    "yolo11x-seg",
 ]
 
 # Training parameters

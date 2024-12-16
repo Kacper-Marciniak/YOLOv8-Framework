@@ -1,11 +1,14 @@
 # Parameters used in training
 
-imgsz: 800 # image size (int)
+imgsz: 640 # image size (int)
 # LOSS GAIN --------------------------------------------------------------- #
-box:   0.05 # box loss gain
+box:  7.5 # box loss gain
 cls:   0.50 # cls loss gain
+dfl:  1.50 # dfl loss gain
+# OPTIMIZER --------------------------------------------------------------- #
+optimizer:  Adam # optimizer name from torch.
 # LEARNING RATE ----------------------------------------------------------- #
-lr0:   0.01 # initial learning rate (SGD=1E-2, Adam=1E-3)
+lr0:   0.001 # initial learning rate (SGD=1E-2, Adam=1E-3)
 lrf:   0.01 # final OneCycleLR learning rate (lr0 * lrf)
 # MOMENTUM ---------------------------------------------------------------- #
 momentum:  0.937 # SGD momentum/Adam beta1
@@ -17,13 +20,13 @@ warmup_momentum:   0.80 # warmup initial momentum
 warmup_bias_lr: 0.10 # warmup initial bias lr
 # AUGMENTATION ------------------------------------------------------------ #
 hsv_h: 0.015 # image HSV-Hue augmentation (fraction)
-hsv_s: 0.75 # image HSV-Saturation augmentation (fraction)
-hsv_v: 0.50 # image HSV-Value augmentation (fraction)
-degrees:   0.00 # image rotation (+/- deg)
-translate: 0.30 # image translation (+/- fraction)
-scale: 0.50 # image scale (+/- gain)
-shear: 0.00 # image shear (+/- deg)
-perspective:   0.00 # image perspective (+/- fraction), range 0-0.001
+hsv_s: 0.70 # image HSV-Saturation augmentation (fraction)
+hsv_v: 0.40 # image HSV-Value augmentation (fraction)
+degrees:   7.50 # image rotation (+/- deg)
+translate: 0.35 # image translation (+/- fraction)
+scale: 0.25 # image scale (+/- gain)
+shear: 5.00 # image shear (+/- deg)
+perspective:   0.0 # image perspective (+/- fraction), range 0-0.001
 flipud: 0.00 # image flip up-down (probability)
 fliplr: 0.50 # image flip left-right (probability)
 mosaic: 1.00 # image mosaic (probability)
