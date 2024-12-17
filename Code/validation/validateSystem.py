@@ -11,7 +11,7 @@ from parameters.parameters import DEFAULT_MODEL_THRESH
 
 from path.root import ROOT_DIR
 
-def Validate(s_DatasetDirectory: str, f_Thresh: float = DEFAULT_MODEL_THRESH, b_SaveOutput: bool = True, sCustomWeightsPath: str|None = None):
+def Validate(s_DatasetDirectory: str, f_Thresh: float = DEFAULT_MODEL_THRESH, b_SaveOutput: bool = True, sCustomWeightsPath: str|None = None, sRunName: str = None):
     """
     Run system validation. 
     """
@@ -32,7 +32,8 @@ def Validate(s_DatasetDirectory: str, f_Thresh: float = DEFAULT_MODEL_THRESH, b_
         
     print(f"Running validation on imageset: {s_DatasetDirectory}")
 
-    sResultsFolder = str(datetime.now().strftime("%Y%m%d_%H%M%S")).replace(' ','_')
+    if sRunName is None: sResultsFolder = str(datetime.now().strftime("%Y%m%d_%H%M%S")).replace(' ','_')
+    else: sResultsFolder = sRunName
 
     _Metrics = C_Model.C_Model.val(
         data = s_PathConfigDataset,
@@ -41,7 +42,7 @@ def Validate(s_DatasetDirectory: str, f_Thresh: float = DEFAULT_MODEL_THRESH, b_
         conf = f_Thresh,
         split = 'test',
         project = os.path.join(ROOT_DIR,'validation_results'),
-        name = sResultsFolder
+        name = sResultsFolder,
     )
 
     a_ClassIds = _Metrics.ap_class_index

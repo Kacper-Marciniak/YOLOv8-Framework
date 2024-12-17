@@ -89,8 +89,7 @@ class CTrainer():
         kwargs = {
             "data":              os.path.join(self.s_DatasetDirectory, 'data.yaml') if not 'classify'==self.c_Model.task else self.s_DatasetDirectory,
             "batch":             i_BatchSize,
-            "epochs":            max(1,i_Epochs), 
-            "imgsz":             TRAINING_PARAMETERS["imgsz"],
+            "epochs":            max(1,i_Epochs),
             "workers":           0,
             "project":           os.path.dirname(self.s_TrainingOutputPath),
             "name":              os.path.basename(self.s_TrainingOutputPath),
@@ -98,7 +97,6 @@ class CTrainer():
             "cache":             'ram',
             "plots":             True,
             "patience":          50,
-            "close_mosaic":      25,
         }
 
         self.c_Model.train(
