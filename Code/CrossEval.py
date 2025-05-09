@@ -34,7 +34,7 @@ if __name__ == "__main__":
     # Select output dataset folder, f.e: 'DAT-1'
     s_OutputDatasetPath = askdirectory("Select output dataset folder", initialdir=os.path.join(ROOT_DIR,'datasets'))
     # Choose model type
-    s_ModelName = choosefromlist(AVAILABLE_MODELS, title="Choose model size", width=75)
+    s_ModelName = choosefromlist(AVAILABLE_MODELS, title="Choose model size", width=75)+".pt"
     # Set output directory
     sResultsFolder = "CrossEval_"+str(datetime.now().strftime("%Y%m%d_%H%M%S")).replace(' ','_')
     os.makedirs(os.path.join(ROOT_DIR, 'validation_results', sResultsFolder))

@@ -1,5 +1,10 @@
 # Parameters used in training
 
+# TRAINING PARAMETERS ----------------------------------------------------- #
+workers: 0 # number of workers for dataloaders
+cache: ram # cache images ('ram', 'disk', 'none')
+patience: 50 # early stopping patience
+# IMAGE SIZE -------------------------------------------------------------- #
 imgsz: 640 # image size (int)
 # LOSS GAIN --------------------------------------------------------------- #
 box:  7.5 # box loss gain
@@ -33,3 +38,5 @@ mosaic: 1.00 # image mosaic (probability)
 mixup: 0.00 # image mixup (probability)
 copy_paste: 0.00 # segment copy-paste (probability)
 erasing: 0.075 # random erasing (probability)
+# MISC -------------------------------------------------------------------- #
+close_mosaic: 5 # close mosaic (number of epochs)

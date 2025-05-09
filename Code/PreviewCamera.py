@@ -21,7 +21,7 @@ if __name__ == "__main__":
 
     # Initialize model
     c_Model = Model(
-        s_PathWeights = 'yolov8n-seg.pt', # Load YOLOv8n segmentation model
+        s_PathWeights = 'yolo11n-seg.pt', # Load YOLOv8n segmentation model
         f_Thresh = f_Thresh, # Confidence threshold value
         b_SAMPostProcess = False, # Disable SAM post-processing and segmentation
     )

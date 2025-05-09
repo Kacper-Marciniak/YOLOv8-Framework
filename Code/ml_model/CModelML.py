@@ -42,7 +42,7 @@ class CModelML():
         self.f_Thresh = np.clip(f_Thresh,0.001,0.999)
 
         # Initialize YOLO architecture
-        print(f"Initializing YOLOv8 model\n\tWeights: {s_PathWeights}\n\tDevice: {self.s_DeviceName}")
+        print(f"Initializing YOLO model\n\tWeights: {s_PathWeights}\n\tDevice: {self.s_DeviceName}")
         self.C_Model = YOLO(
             model = s_PathWeights,
         )
@@ -52,14 +52,10 @@ class CModelML():
         self.s_Task = self.C_Model.task
         
         # Load class names definition
-        self.l_ClassNames = self.C_Model.names
-        if isinstance(self.l_ClassNames, dict):
-            self.l_ClassNames = list(self.l_ClassNames.values())
-        else:
-            self.l_ClassNames = list(self.l_ClassNames)
+        self.dc_ClassNames = self.C_Model.names
         print(f"Class names:")
-        for s_Class in self.l_ClassNames:
-            print(f"\t* {s_Class}")
+        for i_ID, s_Class in self.dc_ClassNames.items():
+            print(f"\t[{i_ID}] {s_Class}")
 
         # SAM Post-processing
         self.b_PostProcess = b_SAMPostProcess
@@ -86,7 +82,7 @@ class CModelML():
 
         try:
             # Perform detection
-            _Results = self.C_Model(a_InputImg, verbose=False)[0]
+            _Results = self.C_Model.predict(a_InputImg, verbose=False, conf=self.f_Thresh)[0]
 
             # Format results
             if _Results.boxes.cls.size(dim=0):                
@@ -98,11 +94,10 @@ class CModelML():
                 a_Scores = _Results.boxes.conf.cpu().numpy().astype(float)
                 a_Classes = _Results.boxes.cls.cpu().numpy().astype(int)
 
-                a_Indices = a_Scores>=self.f_Thresh
-                a_Bboxes, a_Scores, a_Classes = a_Bboxes[a_Indices], a_Scores[a_Indices], a_Classes[a_Indices]
-                l_Polygons= [_Polygon for _Polygon, _Val in zip(l_Polygons, a_Indices) if _Val]
-
-                l_Predictions = [Prediction(self.l_ClassNames[a_Classes[i]], a_Classes[i], a_Scores[i], a_Bboxes[i], l_Polygons[i] if len(l_Polygons) else np.array([])) for i in range(len(a_Classes))]
+                l_Predictions = [
+                    Prediction(self.dc_ClassNames[a_Classes[i]], a_Classes[i], a_Scores[i], a_Bboxes[i], l_Polygons[i] if len(l_Polygons) else np.array([])) 
+                    for i in range(len(a_Classes))
+                ]
 
         except Exception as E:
             print(f"Exception {E} during inference.")
@@ -130,7 +125,7 @@ class CModelML():
             raise Exception("Invalid model input")
 
 
-        print(f"\n\n[YOLOv8 - {self.s_DeviceName}] image shape: {_Input.shape[1]}x{_Input.shape[0]}. Task: {self.s_Task}")
+        print(f"\n\n[YOLO - {self.s_DeviceName}] image shape: {_Input.shape[1]}x{_Input.shape[0]}. Task: {self.s_Task}")
             
         # Tiling
         if not (self.i_TileSize is None) and max(_Input.shape) > self.i_TileSize:

@@ -15,12 +15,12 @@ i_BatchSize = 32
 
 if __name__ == "__main__":
     # Choose model type
-    s_ModelName = choosefromlist(AVAILABLE_MODELS, title="Choose model size", width=75)
+    s_ModelName = choosefromlist(AVAILABLE_MODELS, title="Choose model size", width=75)+".pt"
     # Set dataset directory
     s_DatasetDir = askdirectory("Select dataset folder", initialdir=os.path.join(ROOT_DIR,'datasets'))
 
     try:
-        # Initialize traine mr class
+        # Initialize trainer class
         c_Trainer = CTrainer(
             s_ModelConfig = s_ModelName,
             s_DatasetDirectory = s_DatasetDir

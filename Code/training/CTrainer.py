@@ -10,7 +10,6 @@ import numpy as np
 
 from parameters.TrainingParameters import *
 from parameters.parameters import ALLOWED_INPUT_FILES
-from parameters.TrainingParameters import AVAILABLE_MODELS
 
 from path.root import ROOT_DIR
 
@@ -35,16 +34,7 @@ class CTrainer():
         torch.cuda.empty_cache()
 
         # Initialize YOLO architecture
-        if not (s_ModelConfig.split('.')[-1].lower() in ['pt','yaml']):
-            if s_ModelConfig in AVAILABLE_MODELS:
-                s_ModelConfig += '.pt'
-            else:
-                s_ModelConfig += '.yaml'
-        
-        print(f"Model configuraton: {s_ModelConfig}")
-
         self.c_Model = YOLO(s_ModelConfig)
-
         print(f"Model {s_ModelName} initialized!")
 
     def _GetDatasetDir(self, s_DatasetDirectory: str):
@@ -90,13 +80,10 @@ class CTrainer():
             "data":              os.path.join(self.s_DatasetDirectory, 'data.yaml') if not 'classify'==self.c_Model.task else self.s_DatasetDirectory,
             "batch":             i_BatchSize,
             "epochs":            max(1,i_Epochs),
-            "workers":           0,
             "project":           os.path.dirname(self.s_TrainingOutputPath),
             "name":              os.path.basename(self.s_TrainingOutputPath),
             "exist_ok":          True,
-            "cache":             'ram',
             "plots":             True,
-            "patience":          50,
         }
 
         self.c_Model.train(
@@ -117,7 +104,7 @@ class CTrainer():
             if s_FileName.lower().split('.')[-1] not in ALLOWED_INPUT_FILES: continue
             try:
                 s_FileName = os.path.join(self.s_DatasetDirectory, 'test', s_FileName)
-                self.c_Model.predict(source=s_FileName, conf=f_ConfThresh, imgsz=TRAINING_PARAMETERS['imgsz'], save=True)
+                self.c_Model.predict(source=s_FileName, conf=f_ConfThresh, imgsz=TRAINING_PARAMETERS['imgsz'], save=True, verbose=False)
 
                 if os.path.exists(os.path.join(self.s_TrainingOutputPath, os.path.basename(s_FileName))):
                     shutil.move(os.path.join(self.s_TrainingOutputPath, os.path.basename(s_FileName)),os.path.join(s_PathToSaveInference,os.path.basename(s_FileName)))
@@ -177,9 +164,7 @@ class CTrainer():
             fig.tight_layout()
             fig.savefig(os.path.join(s_PathToSave,s_PlotValue.replace(":","-").replace(".","_").replace("/","_")+".png"),dpi=300)
 
-            plt.cla()
-            del(fig)
-                
+            plt.close(fig)
 
         dc_Data = _ReadResultsFile(self.s_TrainingOutputPath, r"results.csv")
         for s_PlotCategory in list(dc_Data.keys()):
