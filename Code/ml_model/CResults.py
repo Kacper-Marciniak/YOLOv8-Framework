@@ -86,6 +86,8 @@ class Bbox():
 class Polygon():
     
     def __init__(self, aPolygon: np.ndarray):
+        if aPolygon is None or len(aPolygon)==0:
+            aPolygon = np.array([])
         if len(aPolygon.shape) == 2:
             aPolygon = aPolygon.reshape(-1,1,2)
         self.aPolygon = aPolygon.astype(float)

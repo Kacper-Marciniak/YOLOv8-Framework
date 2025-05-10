@@ -19,12 +19,20 @@ if __name__ == "__main__":
     CCamera = Camera()
     CCamera.setResolution(1280,720)
 
-    # Initialize model
+    # Initialize YOLO for instance segmentation
     c_Model = Model(
         s_PathWeights = 'yolo11n-seg.pt', # Load YOLOv8n segmentation model
         f_Thresh = f_Thresh, # Confidence threshold value
-        b_SAMPostProcess = False, # Disable SAM post-processing and segmentation
+        b_MobileSAMPostProcess = False, # Disable SAM post-processing and segmentation
     )
+    # or
+    # Initialize RT-DETR for object detection and SAM for segmentation
+    """c_Model = Model(
+        s_PathWeights = 'rtdetr-l.pt', # Load YOLOv8n segmentation model
+        f_Thresh = f_Thresh, # Confidence threshold value
+        b_MobileSAMPostProcess = True, # Enable SAM post-processing and segmentation
+        s_ModelArchitectureType = 'rtdetr', # Set model architecture type to RT-DETR
+    )"""
 
     while(True):
         # Count frame time

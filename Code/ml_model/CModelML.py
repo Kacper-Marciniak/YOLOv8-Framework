@@ -6,7 +6,7 @@ import torch
 import os, time, sys
 import numpy as np
 import cv2 as cv
-from ultralytics import YOLO
+from ml_model.ModelInitializator import get_model_class
 from parameters.parameters import DEFAULT_MODEL_THRESH, ALLOWED_INPUT_FILES
 from utility.tiles import makeTiles, resultStiching
 from ultralytics.models.sam import Predictor as SAM
@@ -26,8 +26,9 @@ class CModelML():
             s_PathWeights: str, 
             f_Thresh: float = DEFAULT_MODEL_THRESH, 
             s_ForceDevice: str = '',
-            b_SAMPostProcess: bool = False,
-            i_TileSize: int|None = None
+            b_MobileSAMPostProcess: bool = False,
+            i_TileSize: int|None = None,
+            s_ModelArchitectureType: str = 'yolo',
         ):
         # Set device
         try:
@@ -43,8 +44,9 @@ class CModelML():
 
         # Initialize YOLO architecture
         print(f"Initializing YOLO model\n\tWeights: {s_PathWeights}\n\tDevice: {self.s_DeviceName}")
-        self.C_Model = YOLO(
+        self.C_Model = get_model_class(
             model = s_PathWeights,
+            model_type = s_ModelArchitectureType,
         )
         self.C_Model.conf_thresh = self.f_Thresh
         self.C_Model.to(self._Device)
@@ -58,12 +60,12 @@ class CModelML():
             print(f"\t[{i_ID}] {s_Class}")
 
         # SAM Post-processing
-        self.b_PostProcess = b_SAMPostProcess
+        self.b_PostProcess = b_MobileSAMPostProcess
         if self.b_PostProcess:
             # Change task to 'segment'
             self.s_Task = 'segment'
             # Create SAM predictor
-            self.C_SAMModel = SAM(overrides=dict(conf=self.f_Thresh, task='segment', mode='predict', model='sam_b.pt', save=False, verbose=False))            
+            self.C_SAMModel = SAM(overrides=dict(conf=self.f_Thresh, task='segment', mode='predict', model='mobile_sam.pt', save=False, verbose=False))            
         else:
             self.C_SAMModel = None
 
@@ -90,7 +92,7 @@ class CModelML():
                 if self.s_Task == 'segment' and not self.b_PostProcess:
                     l_Polygons = [np.array(np.round(_Polygon),dtype=np.int32) for _Polygon in _Results.masks.xy]
                 else:
-                    l_Polygons = [[]]*a_Bboxes.shape[0]
+                    l_Polygons = [None]*a_Bboxes.shape[0]
                 a_Scores = _Results.boxes.conf.cpu().numpy().astype(float)
                 a_Classes = _Results.boxes.cls.cpu().numpy().astype(int)
 
@@ -163,7 +165,7 @@ class CModelML():
             # Set image
             self.C_SAMModel.set_image(a_Img)  # set with np.ndarray
             
-            for i,_Pred in c_ImageResults.get_predictions():
+            for i,_Pred in enumerate(c_ImageResults.get_predictions()):
                 _Results = self.C_SAMModel(bboxes=_Pred.get_bbox().round().get_xyxy())[0]
                 # Format results
                 if len(_Results.masks.data):

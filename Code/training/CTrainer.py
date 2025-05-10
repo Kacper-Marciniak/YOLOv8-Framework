@@ -5,7 +5,7 @@ Trainer class for ML model training
 import os, torch, gc, shutil
 from datetime import datetime
 import matplotlib.pyplot as plt
-from ultralytics import YOLO
+from ml_model.ModelInitializator import get_model_class
 import numpy as np
 
 from parameters.TrainingParameters import *
@@ -14,7 +14,12 @@ from parameters.parameters import ALLOWED_INPUT_FILES
 from path.root import ROOT_DIR
 
 class CTrainer():
-    def __init__(self, s_ModelConfig: str, s_DatasetDirectory: str):
+    def __init__(
+            self,
+            s_ModelConfig: str,
+            s_DatasetDirectory: str,
+            s_ModelArchitectureType: str = 'yolo'
+        ):
         s_ModelConfig = s_ModelConfig.lower()
         s_ModelName = os.path.basename(s_ModelConfig).split('.')[0]
 
@@ -34,7 +39,10 @@ class CTrainer():
         torch.cuda.empty_cache()
 
         # Initialize YOLO architecture
-        self.c_Model = YOLO(s_ModelConfig)
+        self.c_Model = get_model_class(
+            model = s_ModelConfig,
+            model_type = s_ModelArchitectureType,
+        )
         print(f"Model {s_ModelName} initialized!")
 
     def _GetDatasetDir(self, s_DatasetDirectory: str):
