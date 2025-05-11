@@ -28,6 +28,11 @@ COLOURS = [
 def getColour(i_Index: int):
     return COLOURS[i_Index % len(COLOURS)]
 
+def putText(a_Img: np.ndarray, s_Text: str, t_Loc: tuple, f_Scale: float = 1.0, i_Thickness: int = 1, t_Colour: tuple = (255,255,255)):
+    cv.putText(a_Img, s_Text, t_Loc, cv.FONT_HERSHEY_DUPLEX, f_Scale, (0,0,0), 2*i_Thickness, cv.LINE_AA)
+    cv.putText(a_Img, s_Text, t_Loc, cv.FONT_HERSHEY_DUPLEX, f_Scale, t_Colour, i_Thickness, cv.LINE_AA)
+    return a_Img
+
 def drawResults(a_Img: np.ndarray, c_ImageResults: ImageResults, _Size: tuple|int = None, b_DrawInferenceTime: bool = False):
     
     # Resize input image
@@ -44,12 +49,11 @@ def drawResults(a_Img: np.ndarray, c_ImageResults: ImageResults, _Size: tuple|in
     a_Img = cv.resize(a_Img, (int(f_ResizeX*a_Img.shape[1]), int(f_ResizeY*a_Img.shape[0])))
     a_OverlayBboxes = np.zeros_like(a_Img)
     a_OverlayMasks = np.zeros_like(a_Img)
-        
     
     # Draw objects
-    for i, _Pred in enumerate(c_ImageResults.get_predictions()):
+    for _Pred in c_ImageResults.get_predictions():
         
-        t_Colour = getColour(i)
+        t_Colour = getColour(_Pred.iClass)
         
         # Draw masks for instance segmentation
         if _Pred.Polygon.exists():
@@ -65,24 +69,24 @@ def drawResults(a_Img: np.ndarray, c_ImageResults: ImageResults, _Size: tuple|in
         s_Text = f"{_Pred.sClass}: {_Pred.fScore:.2f}"
         f_TextScale, i_TextThickness = 0.5, 1
         (w, h), _ = cv.getTextSize(s_Text, cv.FONT_HERSHEY_DUPLEX, f_TextScale, i_TextThickness)
-        h += 6
+        h += 8
         w += 4        
-        cv.rectangle(a_OverlayBboxes, (a_Bbox[0],a_Bbox[1]), (a_Bbox[0]+w,a_Bbox[1]+h), t_Colour, -1)
-        cv.putText(a_OverlayBboxes, s_Text, (a_Bbox[0]+2,a_Bbox[1]+h-3), cv.FONT_HERSHEY_DUPLEX, f_TextScale, (0,0,0), i_TextThickness*2, cv.LINE_AA)
-        cv.putText(a_OverlayBboxes, s_Text, (a_Bbox[0]+2,a_Bbox[1]+h-3), cv.FONT_HERSHEY_DUPLEX, f_TextScale, (255,255,255), i_TextThickness, cv.LINE_AA)
+        cv.rectangle(a_OverlayBboxes, (a_Bbox[0],a_Bbox[1]), (a_Bbox[0]+w,a_Bbox[1]+h), t_Colour, -1)        
+        a_OverlayBboxes = putText(a_OverlayBboxes, s_Text, (a_Bbox[0]+2,a_Bbox[1]+h-3), f_TextScale, i_TextThickness, (255,255,255))
 
     # Create final preview image
-    a_Overlay = cv.addWeighted(a_OverlayMasks, 1, a_OverlayBboxes, 1, 0)
-    del a_OverlayMasks, a_OverlayBboxes
-
     a_Img = cv.addWeighted(
         a_Img, 1,
-        a_Overlay, .5, 
+        a_OverlayMasks, .5, 
         0
-    )    
+    )
+    a_Img = cv.addWeighted(
+        a_Img, 1,
+        a_OverlayBboxes, 1, 
+        0
+    ) 
 
     if b_DrawInferenceTime:
-        cv.putText(a_Img, f"Processing time: {c_ImageResults.get_inference_time():.1f}", (0,a_Img.shape[0]), cv.FONT_HERSHEY_DUPLEX, 1.0, (0,0,0), 2, cv.LINE_AA)
-        cv.putText(a_Img, f"Processing time: {c_ImageResults.get_inference_time():.1f}", (0,a_Img.shape[0]), cv.FONT_HERSHEY_DUPLEX, 1.0, (255,255,255), 1, cv.LINE_AA)
+        a_Img = putText(a_Img, f"Processing time: {c_ImageResults.get_inference_time():.1f} ms", (0, a_Img.shape[0]-10), .75, 1, (255,255,255))
     
     return a_Img

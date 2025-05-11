@@ -133,7 +133,7 @@ input_data_folder
 
 1. Run [PrepareDataset.py](Code/PrepareDataset.py)
 2. Select input folder with images and labels
-3. Select output dataset folder in desired directory - f.e. 'datasets/datastet-example'
+3. Select output dataset folder in desired directory - f.e. 'datasets/dataset-example'
 4. System will create a new dataset with the yaml configuration file and train, test, val subsets.
 
 Output data structure:
@@ -148,6 +148,40 @@ output_data_folder
     ...
 |_ test
     ...
+```
+
+### Prepare dataset for cross validation
+
+Input data structure:
+```
+input_data_folder
+|_ class_names.txt # list of class names in plain, each class in a new line
+|_ data
+    |_ file1.txt # label file should have the '.txt' extension
+    |_ file1.jpg # image file should have '.jpg', '.jpeg' or '.png' extension
+    ...
+```
+
+1. Run [PrepareCrossValDataset.py](Code/PrepareCrossValDataset.py)
+2. Select input folder with images and labels
+3. Select output dataset folder in desired directory - f.e. 'datasets/dataset-example'
+4. System will create a new dataset for K-fold cross validation task with the yaml configuration files.
+
+Output data structure:
+```
+|_ dataset_0
+    |_ data.yaml # dataset configuration file
+    |_ train
+        |_ file1.txt
+        |_ file1.jpg
+        ...
+    |_ val
+        ...
+    |_ test
+        ...
+|_ dataset_1
+...
+|_ dataset_N
 ```
 
 ### Train model
@@ -254,14 +288,13 @@ Parameters in PreviewCamera.py:
 <p align="center"><img src="readme/Example_2.jpg" width= 90% style="max-width:500px"></p>
 <p align="center"><img src="readme/Example_3.jpg" width= 90% style="max-width:500px"></p>
 
-### Cross-evaluation model
+### Cross-evaluation
 
 1. Run [CrossEval.py](Code/CrossEval.py)
-2. Select input folder with images and labels
-3. Select output dataset folder in desired directory - f.e. 'datasets/datastet-example'
-4. Select [model size](https://docs.ultralytics.com/models/yolov8/#supported-modes)
-5. System will split data into N segments, prepare models and perform cross validation.
-6. Cross validation output is saved to the [validation_results](validation_results)
+2. Select input crossval dataset folder
+3. Select [model size](https://docs.ultralytics.com/models/yolov8/#supported-modes)
+4. System will prepare models and perform cross validation for K segments.
+5. Cross validation output is saved to the [validation_results](validation_results)
 
 ```
 validation_results
@@ -272,7 +305,6 @@ validation_results
 ```
 
 Parameters in CrossEval.py:
-- ```iNSegments``` - number of sub-datasets used during cross validation
 - ```i_Epochs``` - number of training epochs
 - ```i_BatchSize``` - training batch size
 - ```f_ConfThreshTest``` - confidence threshold during testing

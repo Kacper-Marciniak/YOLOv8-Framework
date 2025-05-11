@@ -1,12 +1,17 @@
 """
-Create the dataset needed for model training from labeled set of images
+1. Create the dataset needed for model training from labeled set of images.
+2. Split into N segments.
+3. Train YOLOv8 object detection models.
+4. Evaluate.
 """
 
-import os
-from dataset_prep.createDataset import prepareDataset
-from utility.GUI import askdirectory
+import os, json
+from dataset_prep.createDataset import prepareCrossEvalData
 from path.root import ROOT_DIR
+from utility.GUI import askdirectory
 
+# Data preparation
+iNSegments = 5
 
 """
 Input data structure:
@@ -19,12 +24,13 @@ Input data structure:
 """
 
 if __name__ == "__main__":
+
     # Select input folder with images and labels
     s_InputPath = askdirectory("Select input folder with images and labels" , initialdir=os.path.join(ROOT_DIR,'datasets'))
     # Select output dataset folder, f.e: 'DAT-1'
     s_OutputDatasetPath = askdirectory("Select output dataset folder", initialdir=os.path.join(ROOT_DIR,'datasets'))
-
+  
     if '' in [s_InputPath, s_OutputDatasetPath]: raise Exception("Not a valid path")
 
     # Run dataset preparation script
-    prepareDataset(s_InputPath, s_OutputDatasetPath)
+    prepareCrossEvalData(s_InputPath, s_OutputDatasetPath, iNSegments)

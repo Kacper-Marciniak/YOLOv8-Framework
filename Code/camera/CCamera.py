@@ -6,10 +6,21 @@ import os
 import threading
 
 
+import atexit
+import signal
+import sys
+
+def shutdown_handler(*args):
+    CCamera.closeAll()
+    if args: sys.exit(0)
+
+atexit.register(shutdown_handler)
+signal.signal(signal.SIGINT, shutdown_handler)
+signal.signal(signal.SIGTERM, shutdown_handler)
+
 def threaded(fn):
     def wrapper(*args, **kwargs):
-        #thread = threading.Thread(target=fn, args=args, kwargs=kwargs, daemon=True)
-        thread = threading.Thread(target=fn, args=args, kwargs=kwargs)
+        thread = threading.Thread(target=fn, args=args, kwargs=kwargs, daemon=True)
         thread.start()
         return thread
     return wrapper
@@ -18,6 +29,15 @@ class CCamera:
     """
     Camera class from webcam functionality
     """
+    _instances = []
+    @classmethod
+    def closeAll(cls):
+        """
+        Close all camera instances
+        """ 
+        for instance in cls._instances:
+            instance.close()
+
     def __init__(self, i_Name: int = 0):
         print(f"Initializing camera {i_Name}")
         self.i_DeviceName = i_Name
@@ -62,7 +82,6 @@ class CCamera:
             self._CameraThread.join()
         print(f"Camera {self.i_DeviceName} is off!")
         
-
     @threaded
     def __run(self):
         while self.b_Run and self.CCamera.isOpened():
@@ -73,14 +92,13 @@ class CCamera:
                 print(f"Exception {E} in camera loop.")
 
     def __del__(self):
-        self.close()
-
+        self.stop()
+        self.CCamera.release()
 
     def __waitCameraStart(self):
         while not self.b_IsFrame:
             time.sleep(0.1)
 
-    
     def close(self):
         """
         Close camera
@@ -104,13 +122,6 @@ class CCamera:
             cv.imshow("Output", self.grabFrame())
             if cv.waitKey(1000//i_TargetFps) == ord(s_BreakKey):
                 break
-
-    def close(self):
-        """
-        Close camera
-        """
-        self.CCamera.release()
-        print(f"Camera {self.i_DeviceName} was closed!")
 
     def getCameraResolution(self):
         """

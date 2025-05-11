@@ -16,37 +16,29 @@ from datetime import datetime
 import numpy as np
 import gc
 
-# Data preparation
-iNSegments = 5
-
 # Training
-i_Epochs = 25
+i_Epochs = 10
 f_ConfThreshTest = 0.25
-i_BatchSize = 8
+i_BatchSize = 32
 
 # Eval
 f_EvalThresh = .25
 
 if __name__ == "__main__":
 
-    # Select input folder with images and labels
-    s_InputPath = askdirectory("Select input folder with images and labels" , initialdir=os.path.join(ROOT_DIR,'datasets'))
-    # Select output dataset folder, f.e: 'DAT-1'
-    s_OutputDatasetPath = askdirectory("Select output dataset folder", initialdir=os.path.join(ROOT_DIR,'datasets'))
+    # Select crossval dataset folder
+    s_OutputDatasetPath = askdirectory("Select crossval dataset folder", initialdir=os.path.join(ROOT_DIR,'datasets'))
     # Choose model type
     s_ModelName = choosefromlist(AVAILABLE_MODELS, title="Choose model size", width=75)+".pt"
     # Set output directory
     sResultsFolder = "CrossEval_"+str(datetime.now().strftime("%Y%m%d_%H%M%S")).replace(' ','_')
     os.makedirs(os.path.join(ROOT_DIR, 'validation_results', sResultsFolder))
 
-    if '' in [s_InputPath, s_OutputDatasetPath]: raise Exception("Not a valid path")
 
-    # Run dataset preparation script
-    prepareCrossEvalData(s_InputPath, s_OutputDatasetPath, iNSegments)
-
-    lDatasets = [f"dataset_{i}" for i in range(iNSegments)]
-
-    for i,sData in enumerate(lDatasets):
+    lDatasets = os.listdir(s_OutputDatasetPath)
+    iNSegments = len(lDatasets)
+    for sData in lDatasets:
+        i = int(sData.split('_')[-1])
         s_DatasetDir = os.path.join(s_OutputDatasetPath,sData)
         try:
             # Initialize trainer class

@@ -12,7 +12,7 @@ from camera.CCamera import CCamera as Camera
 # Target FPS value
 i_TargetFPS = 10
 # Confidence threshold value
-f_Thresh = 0.50
+f_Thresh = 0.25
 
 if __name__ == "__main__":
     # Initialize camera
@@ -52,8 +52,6 @@ if __name__ == "__main__":
         # Break from loop when OpenCV window is closed or ESC is pressed
         if not cv.getWindowProperty("Camera", cv.WND_PROP_VISIBLE) or sKey == 27: break
     
-    try: 
-        CCamera.close()
-    except:
-        pass
-    CCamera = None
+    # Release camera and close OpenCV windows
+    CCamera.close()
+    cv.destroyAllWindows()
