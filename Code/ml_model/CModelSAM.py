@@ -64,6 +64,7 @@ class CModelSAM():
             _Results = self.C_SAMModel(bboxes=l_Bbox)[0]
             # Format results
             for i,_Polygon in enumerate(_Results.masks.xy):
+                if len(_Polygon) == 0: continue # Check if polygon is empty
                 a_Polygon = np.array(np.round(_Polygon),dtype=np.int32)
                 x,y,w,h = cv.boundingRect(a_Polygon)
                 l_Bbox = [x,y,x+w,y+h]
@@ -77,7 +78,8 @@ class CModelSAM():
     def Segment(self, _Input: np.ndarray | str, l_Bbox: list, b_PrintOutput: bool = True, s_ImageID: str = None) -> ImageResults:
         """
         Perform SAM segmentation on image, needs bounding box prompt
-        """   
+        """
+        l_Bbox = [min(l_Bbox[0], l_Bbox[2]), min(l_Bbox[1], l_Bbox[3]), max(l_Bbox[0], l_Bbox[2]), max(l_Bbox[1], l_Bbox[3])]
         f_Time = time.time()
 
         if not b_PrintOutput:            

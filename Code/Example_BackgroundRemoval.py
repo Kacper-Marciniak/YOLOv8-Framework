@@ -20,7 +20,7 @@ if __name__ == "__main__":
 
     # Initialize model
     c_Model = Model(
-        s_PathWeights = 'yolov8n-seg.pt', # YOLOv8-Nano detection model trained on COCO dataset
+        s_PathWeights = 'yolo11n-seg.pt', # YOLO11-Nano instance segmentation model trained on COCO dataset
         f_Thresh = f_Thresh, # Confidence threshold value
     )
 
@@ -33,8 +33,6 @@ if __name__ == "__main__":
         # Inference - object detection
         c_Results = c_Model.Detect(a_Img, b_PrintOutput = False)
 
-        c_Results.get_predictions_by_class("person")
-
         # Get all instances of 'person' class
         l_PersonContours = [_pred.get_polygon().round().get_array() for _pred in c_Results.get_predictions_by_class("person")]
 
@@ -45,7 +43,7 @@ if __name__ == "__main__":
        
         # Blur image
         t_KernelImage = (31,31)
-        a_ImgBlur = cv.blur(a_Img.copy(), t_KernelImage)
+        a_ImgBlur = cv.GaussianBlur(a_Img.copy(), t_KernelImage, -1)
         a_ImgBlur = cv.cvtColor(cv.cvtColor(a_ImgBlur, cv.COLOR_BGR2GRAY), cv.COLOR_GRAY2BGR)
 
         # Blur mask

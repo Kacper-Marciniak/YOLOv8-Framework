@@ -33,7 +33,7 @@ def putText(a_Img: np.ndarray, s_Text: str, t_Loc: tuple, f_Scale: float = 1.0, 
     cv.putText(a_Img, s_Text, t_Loc, cv.FONT_HERSHEY_DUPLEX, f_Scale, t_Colour, i_Thickness, cv.LINE_AA)
     return a_Img
 
-def drawResults(a_Img: np.ndarray, c_ImageResults: ImageResults, _Size: tuple|int = None, b_DrawInferenceTime: bool = False):
+def drawResults(a_Img: np.ndarray, c_ImageResults: ImageResults, _Size: tuple|int = None, b_DrawInferenceTime: bool = False, b_NoLabels: bool = False) -> np.ndarray:
     
     # Resize input image
     if isinstance(_Size,tuple):
@@ -66,13 +66,14 @@ def drawResults(a_Img: np.ndarray, c_ImageResults: ImageResults, _Size: tuple|in
         cv.rectangle(a_OverlayBboxes, (a_Bbox[0],a_Bbox[1]), (a_Bbox[2],a_Bbox[3]), t_Colour, 2, cv.LINE_AA) 
         
         # Put text
-        s_Text = f"{_Pred.sClass}: {_Pred.fScore:.2f}"
-        f_TextScale, i_TextThickness = 0.5, 1
-        (w, h), _ = cv.getTextSize(s_Text, cv.FONT_HERSHEY_DUPLEX, f_TextScale, i_TextThickness)
-        h += 8
-        w += 4        
-        cv.rectangle(a_OverlayBboxes, (a_Bbox[0],a_Bbox[1]), (a_Bbox[0]+w,a_Bbox[1]+h), t_Colour, -1)        
-        a_OverlayBboxes = putText(a_OverlayBboxes, s_Text, (a_Bbox[0]+2,a_Bbox[1]+h-3), f_TextScale, i_TextThickness, (255,255,255))
+        if not b_NoLabels:
+            s_Text = f"{_Pred.sClass}: {_Pred.fScore:.2f}"
+            f_TextScale, i_TextThickness = 0.5, 1
+            (w, h), _ = cv.getTextSize(s_Text, cv.FONT_HERSHEY_DUPLEX, f_TextScale, i_TextThickness)
+            h += 8
+            w += 4        
+            cv.rectangle(a_OverlayBboxes, (a_Bbox[0],a_Bbox[1]), (a_Bbox[0]+w,a_Bbox[1]+h), t_Colour, -1)        
+            a_OverlayBboxes = putText(a_OverlayBboxes, s_Text, (a_Bbox[0]+2,a_Bbox[1]+h-3), f_TextScale, i_TextThickness, (255,255,255))
 
     # Create final preview image
     a_Img = cv.addWeighted(

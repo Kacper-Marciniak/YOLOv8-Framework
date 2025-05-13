@@ -3,6 +3,7 @@ Use this script to run the SAM model on a camera feed and segment objects by dra
 """
 
 import cv2 as cv
+import numpy as np
 
 from ml_model.CModelSAM import CModelSAM as ModelSAM
 from results.visualization import drawResults
@@ -18,9 +19,10 @@ global_mouse = [0,0]
 
 def get_click(event,x,y,flags,param):
     global global_bbox, global_mouse
-    if event == cv.EVENT_LBUTTONDBLCLK:
+    if event == cv.EVENT_LBUTTONUP:
         global_bbox += [x,y]
     global_mouse = [x,y]
+    
 
 if __name__ == "__main__":
     # Initialize camera
@@ -39,9 +41,8 @@ if __name__ == "__main__":
     a_Img = CCamera.grabFrame()
     c_Model.setImage(a_Img)
 
+    while(cv.getWindowProperty("Camera", cv.WND_PROP_VISIBLE)):
 
-    while(True):
-        
         # Get bounding box
         while len(global_bbox)<4:
             a_Preview = a_Img.copy()
@@ -55,31 +56,41 @@ if __name__ == "__main__":
             cv.line(a_Preview, (global_mouse[0],0), (global_mouse[0],a_Img.shape[0]), (255,255,255), 1)
 
             cv.imshow("Camera", a_Preview)
-            cv.waitKey(50)
-        
-        
-        # Inference - object detection        
-        c_ImageResults = c_Model.Segment(a_Img, l_Bbox=global_bbox, b_PrintOutput=False)
+            sKey = cv.waitKey(50)
 
-        # Visualize results with opencv GUI
-        a_Preview = drawResults(a_Img.copy(), c_ImageResults)
-        
-        cv.imshow("Camera", a_Preview)        
-        sKey = cv.waitKey(0)
+            if not cv.getWindowProperty("Camera", cv.WND_PROP_VISIBLE) or sKey != -1: break
+        else:
+            # Inference - object detection        
+            c_ImageResults = c_Model.Segment(a_Img, l_Bbox=global_bbox, b_PrintOutput=False)
 
-        # Break from loop when openCV window is closed or ESC is pressed
-        if not cv.getWindowProperty("Camera", cv.WND_PROP_VISIBLE) or sKey == 27: break
+            # Visualize results with opencv GUI
+            a_Preview = drawResults(a_Img.copy(), c_ImageResults, b_NoLabels=True)
 
+            # Segment object
+            if c_ImageResults.get_n_predictions():
+                a_Polygon = c_ImageResults.get_predictions()[0].get_polygon().round().get_array()
+                x,y,w,h = cv.boundingRect(a_Polygon)
+                # Segment
+                a_Mask = np.zeros((a_Img.shape[0],a_Img.shape[1]))
+                a_Mask = cv.drawContours(a_Mask, [a_Polygon], -1, 255, -1)
+                a_Segment = a_Img.copy()
+                a_Segment[a_Mask==0] = 0
+                a_Segment = a_Segment[y:y+h, x:x+w]
+                
+                cv.imshow("Segment", a_Segment)
+
+            cv.imshow("Camera", a_Preview)        
+            sKey = cv.waitKey(0)
+
+        # Break from loop if ESC is pressed
+        if sKey == 27: 
+            break
         # Get new frame if SPACE is pressed
-        if sKey == 32:            
+        elif sKey == ord(' '):
+            c_Model.resetImage()       
             a_Img = CCamera.grabFrame()
             c_Model.setImage(a_Img)
-        
-        c_Model.resetImage()
+            
         global_bbox = []
-    
-    try: 
-        CCamera.close()
-    except:
-        pass
-    CCamera = None
+        if cv.getWindowProperty("Segment", cv.WND_PROP_VISIBLE):
+            cv.destroyWindow("Segment")
